@@ -1,6 +1,11 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, GithubAuthProvider } from 'firebase/auth';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { 
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDV_xZk8LxeBXkCJ8MVeUFVQ8moIuK6wKo",
@@ -14,26 +19,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+// Initialize auth providers
 export const auth = getAuth(app);
-export const db = getFirestore(app);
-
-// Enable offline persistence immediately after db initialization
-try {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      // Multiple tabs open, persistence can only be enabled in one tab at a time.
-      console.warn('Firebase persistence failed: Multiple tabs open');
-    } else if (err.code === 'unimplemented') {
-      // The current browser does not support all of the features required to enable persistence
-      console.warn('Firebase persistence failed: Browser not supported');
-    }
-  });
-} catch (error) {
-  // Handle synchronous errors including internal assertion failures
-  console.warn('Firebase persistence initialization failed:', error);
-}
-
 export const googleProvider = new GoogleAuthProvider();
 export const githubProvider = new GithubAuthProvider();
+
+// Initialize Firestore with persistent cache and multi-tab support
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
 
 export default app;

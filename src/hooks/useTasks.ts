@@ -8,12 +8,13 @@ import {
   addDoc, 
   updateDoc, 
   deleteDoc, 
-  doc 
+  doc,
+  enableNetwork,
+  disableNetwork
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { Task, TaskStats } from '../types/task';
-import { offlineStorage } from '../utils/offlineStorage';
 import { useOfflineStatus } from '../hooks/useOfflineStatus';
 
 export const useTasks = () => {
@@ -21,11 +22,14 @@ export const useTasks = () => {
   const isOnline = useOfflineStatus();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [stats, setStats] = useState<TaskStats>({
     total: 0,
     completed: 0,
     inProgress: 0,
     overdue: 0,
+    thisWeekTotal: 0,
+    thisWeekCompleted: 0,
     byCategory: {
       'code-tasks': 0,
       'learning': 0,
@@ -41,66 +45,22 @@ export const useTasks = () => {
     },
   });
 
-  useEffect(() => {
-    if (!user) {
-      setTasks([]);
-      offlineStorage.setTasks([]);
-      setLoading(false);
-      return;
-    }
-
-    if (isOnline) {
-      const tasksQuery = query(
-        collection(db, 'tasks'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
-
-      const unsubscribe = onSnapshot(tasksQuery, (snapshot) => {
-        const tasksData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-          updatedAt: doc.data().updatedAt?.toDate(),
-          dueDate: doc.data().dueDate?.toDate(),
-        })) as Task[];
-
-        setTasks(tasksData);
-        offlineStorage.setTasks(tasksData);
-        calculateStats(tasksData);
-        setLoading(false);
-      }, (error) => {
-        console.warn('Failed to fetch tasks online, using offline data:', error);
-        const offlineTasks = offlineStorage.getTasks();
-        setTasks(offlineTasks);
-        calculateStats(offlineTasks);
-        setLoading(false);
-      });
-
-      return unsubscribe;
-    } else {
-      // Load offline tasks
-      const offlineTasks = offlineStorage.getTasks();
-      setTasks(offlineTasks);
-      calculateStats(offlineTasks);
-      setLoading(false);
-    }
-  }, [user, isOnline]);
-
+  // Calculate task statistics
   const calculateStats = (tasksData: Task[]) => {
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     
-    // Filter tasks from this week
     const thisWeekTasks = tasksData.filter(task => 
       task.createdAt && task.createdAt >= oneWeekAgo
     );
     
-    const stats: TaskStats = {
+    const newStats: TaskStats = {
       total: tasksData.length,
       completed: tasksData.filter(t => t.status === 'completed').length,
       inProgress: tasksData.filter(t => t.status === 'in-progress').length,
-      overdue: tasksData.filter(t => t.dueDate && t.dueDate < now && t.status !== 'completed').length,
+      overdue: tasksData.filter(t => 
+        t.dueDate && t.dueDate < now && t.status !== 'completed'
+      ).length,
       thisWeekTotal: thisWeekTasks.length,
       thisWeekCompleted: thisWeekTasks.filter(t => t.status === 'completed').length,
       byCategory: {
@@ -117,11 +77,87 @@ export const useTasks = () => {
         'urgent': tasksData.filter(t => t.priority === 'urgent').length,
       },
     };
-    setStats(stats);
+    setStats(newStats);
   };
 
+  // Main effect for loading tasks
+  useEffect(() => {
+    if (!user) {
+      setTasks([]);
+      setLoading(false);
+      return;
+    }
+
+    let unsubscribe: () => void;
+    let networkEnabled = true;
+
+    const setupFirestoreListener = async () => {
+      try {
+        // Build the query with proper indexing
+        const tasksQuery = query(
+          collection(db, 'tasks'),
+          where('userId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
+
+        if (isOnline) {
+          if (!networkEnabled) {
+            await enableNetwork(db);
+            networkEnabled = true;
+          }
+        } else {
+          await disableNetwork(db);
+          networkEnabled = false;
+        }
+
+        unsubscribe = onSnapshot(
+          tasksQuery,
+          (snapshot) => {
+            const tasksData = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+              createdAt: doc.data().createdAt?.toDate(),
+              updatedAt: doc.data().updatedAt?.toDate(),
+              dueDate: doc.data().dueDate?.toDate(),
+            })) as Task[];
+
+            setTasks(tasksData);
+            calculateStats(tasksData);
+            setLoading(false);
+            setError(null);
+          },
+          (error) => {
+            console.error('Firestore snapshot error:', error);
+            setError(error);
+            setLoading(false);
+            
+            // If it's an index error, show helpful message
+            if (error.code === 'failed-precondition') {
+              console.error(
+                'Index missing. Create it in Firebase Console:',
+                error.message.match(/https:\/\/console\.firebase\.google\.com[^\s]+/)?.[0]
+              );
+            }
+          }
+        );
+
+      } catch (error) {
+        console.error('Firestore setup error:', error);
+        setError(error as Error);
+        setLoading(false);
+      }
+    };
+
+    setupFirestoreListener();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [user, isOnline]);
+
+  // Add a new task
   const addTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
-    if (!user) return;
+    if (!user) throw new Error('User not authenticated');
 
     const newTask = {
       ...taskData,
@@ -130,76 +166,50 @@ export const useTasks = () => {
       updatedAt: new Date(),
     };
 
-    if (isOnline) {
-      try {
-        await addDoc(collection(db, 'tasks'), newTask);
-      } catch (error) {
-        console.warn('Failed to add task online, storing offline:', error);
-        // Add to offline storage with temporary ID
-        const tempId = `temp_${Date.now()}`;
-        const offlineTasks = offlineStorage.getTasks();
-        offlineTasks.unshift({ ...newTask, id: tempId } as Task);
-        offlineStorage.setTasks(offlineTasks);
-        setTasks(offlineTasks);
-        calculateStats(offlineTasks);
-      }
-    } else {
-      // Add to offline storage only
-      const tempId = `temp_${Date.now()}`;
-      const offlineTasks = offlineStorage.getTasks();
-      offlineTasks.unshift({ ...newTask, id: tempId } as Task);
-      offlineStorage.setTasks(offlineTasks);
-      setTasks(offlineTasks);
-      calculateStats(offlineTasks);
+    try {
+      await addDoc(collection(db, 'tasks'), newTask);
+      setError(null);
+    } catch (error) {
+      console.error('Failed to add task:', error);
+      setError(error as Error);
+      throw error;
     }
   };
 
+  // Update an existing task
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     const updateData = {
       ...updates,
       updatedAt: new Date(),
     };
 
-    if (isOnline && !taskId.startsWith('temp_')) {
-      try {
-        await updateDoc(doc(db, 'tasks', taskId), updateData);
-      } catch (error) {
-        console.warn('Failed to update task online:', error);
-      }
-    }
-
-    // Update offline storage
-    const offlineTasks = offlineStorage.getTasks();
-    const taskIndex = offlineTasks.findIndex((t: Task) => t.id === taskId);
-    if (taskIndex !== -1) {
-      offlineTasks[taskIndex] = { ...offlineTasks[taskIndex], ...updateData };
-      offlineStorage.setTasks(offlineTasks);
-      setTasks(offlineTasks);
-      calculateStats(offlineTasks);
+    try {
+      await updateDoc(doc(db, 'tasks', taskId), updateData);
+      setError(null);
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      setError(error as Error);
+      throw error;
     }
   };
 
+  // Delete a task
   const deleteTask = async (taskId: string) => {
-    if (isOnline && !taskId.startsWith('temp_')) {
-      try {
-        await deleteDoc(doc(db, 'tasks', taskId));
-      } catch (error) {
-        console.warn('Failed to delete task online:', error);
-      }
+    try {
+      await deleteDoc(doc(db, 'tasks', taskId));
+      setError(null);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      setError(error as Error);
+      throw error;
     }
-
-    // Remove from offline storage
-    const offlineTasks = offlineStorage.getTasks();
-    const filteredTasks = offlineTasks.filter((t: Task) => t.id !== taskId);
-    offlineStorage.setTasks(filteredTasks);
-    setTasks(filteredTasks);
-    calculateStats(filteredTasks);
   };
 
   return {
     tasks,
     stats,
     loading,
+    error,
     addTask,
     updateTask,
     deleteTask,
