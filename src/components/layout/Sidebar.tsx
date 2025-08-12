@@ -23,7 +23,7 @@ const menuItems = [
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { path: '/categories', icon: Code, label: 'Categories' },
   { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { path: '/calendar', icon: Calendar, label: 'Calendar' },
+  { path: '/calendarpage', icon: Calendar, label: 'Calendar' },
 ];
 
 const categoryItems = [

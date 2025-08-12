@@ -10,12 +10,35 @@ import {
   deleteDoc, 
   doc,
   enableNetwork,
-  disableNetwork
+  disableNetwork,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { Task, TaskStats } from '../types/task';
 import { useOfflineStatus } from '../hooks/useOfflineStatus';
+
+// Helper function to safely convert Firestore data
+const convertFirestoreData = (data: any) => {
+  const convertTimestamp = (field: any) => {
+    if (!field) return null;
+    if (field instanceof Timestamp) return field.toDate();
+    if (field instanceof Date) return field;
+    if (typeof field === 'string') {
+      const date = new Date(field);
+      return isNaN(date.getTime()) ? null : date;
+    }
+    return null;
+  };
+
+  return {
+    ...data,
+    createdAt: convertTimestamp(data.createdAt),
+    updatedAt: convertTimestamp(data.updatedAt),
+    dueDate: convertTimestamp(data.dueDate),
+    // Convert other date fields as needed
+  };
+};
 
 export const useTasks = () => {
   const { user } = useAuth();
@@ -93,7 +116,6 @@ export const useTasks = () => {
 
     const setupFirestoreListener = async () => {
       try {
-        // Build the query with proper indexing
         const tasksQuery = query(
           collection(db, 'tasks'),
           where('userId', '==', user.uid),
@@ -115,10 +137,7 @@ export const useTasks = () => {
           (snapshot) => {
             const tasksData = snapshot.docs.map(doc => ({
               id: doc.id,
-              ...doc.data(),
-              createdAt: doc.data().createdAt?.toDate(),
-              updatedAt: doc.data().updatedAt?.toDate(),
-              dueDate: doc.data().dueDate?.toDate(),
+              ...convertFirestoreData(doc.data())
             })) as Task[];
 
             setTasks(tasksData);
@@ -131,7 +150,6 @@ export const useTasks = () => {
             setError(error);
             setLoading(false);
             
-            // If it's an index error, show helpful message
             if (error.code === 'failed-precondition') {
               console.error(
                 'Index missing. Create it in Firebase Console:',
@@ -162,8 +180,11 @@ export const useTasks = () => {
     const newTask = {
       ...taskData,
       userId: user.uid,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: Timestamp.fromDate(new Date()),
+      updatedAt: Timestamp.fromDate(new Date()),
+      // Convert undefined values to null for Firestore
+      estimate: taskData.estimate ?? null,
+      dueDate: taskData.dueDate ? Timestamp.fromDate(taskData.dueDate) : null,
     };
 
     try {
@@ -178,9 +199,26 @@ export const useTasks = () => {
 
   // Update an existing task
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    // Filter out undefined values and convert dates
+    const filteredUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+      if (value === undefined) return acc;
+      
+      // Convert Date objects to Timestamps
+      if (value instanceof Date) {
+        return { ...acc, [key]: Timestamp.fromDate(value) };
+      }
+      
+      // Convert null/undefined estimates to null
+      if (key === 'estimate' && value === undefined) {
+        return { ...acc, [key]: null };
+      }
+      
+      return { ...acc, [key]: value };
+    }, {});
+
     const updateData = {
-      ...updates,
-      updatedAt: new Date(),
+      ...filteredUpdates,
+      updatedAt: Timestamp.fromDate(new Date()),
     };
 
     try {

@@ -13,6 +13,11 @@ export interface Task {
   subtasks: SubTask[];
   tags: string[];
   timeframe: Timeframe;
+  frequency: 'once' | 'daily' | 'weekly' | 'monthly';
+  timeRange: {
+    start: number | string; // hour (0-23) or day/week name
+    end: number | string;
+  };
 }
 
 export interface SubTask {

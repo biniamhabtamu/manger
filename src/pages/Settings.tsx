@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, 
   Bell, 
@@ -14,17 +14,40 @@ import {
   Mail,
   Globe,
   Moon,
-  Sun
+  Sun,
+  Lock,
+  Upload,
+  Key,
+  Smartphone as Mobile,
+  LogOut,
+  CreditCard,
+  Palette as ThemeIcon,
+  Globe as Language,
+  Accessibility
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import toast from 'react-hot-toast';
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } },
+};
+
 export const Settings: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Profile settings
   const [profileData, setProfileData] = useState({
@@ -32,6 +55,9 @@ export const Settings: React.FC = () => {
     email: userProfile?.email || '',
     phone: userProfile?.phone || '',
     bio: '',
+    avatar: null as File | null,
+    language: 'en',
+    timezone: 'UTC',
   });
 
   // Notification settings
@@ -41,6 +67,8 @@ export const Settings: React.FC = () => {
     taskReminders: true,
     weeklyReports: false,
     marketingEmails: false,
+    soundAlerts: true,
+    vibration: false,
   });
 
   // Privacy settings
@@ -48,13 +76,33 @@ export const Settings: React.FC = () => {
     profileVisibility: 'private',
     dataSharing: false,
     analytics: true,
+    twoFactor: false,
+    password: '',
+    confirmPassword: '',
+    showPassword: false,
+  });
+
+  // Appearance settings
+  const [appearance, setAppearance] = useState({
+    fontSize: 'medium',
+    colorScheme: 'default',
+    reducedMotion: false,
+    highContrast: false,
+  });
+
+  // Billing settings (new)
+  const [billing, setBilling] = useState({
+    plan: 'free',
+    cardLast4: '4242',
+    nextBilling: '2024-09-01',
   });
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'privacy', label: 'Privacy', icon: Shield },
+    { id: 'privacy', label: 'Security & Privacy', icon: Shield },
     { id: 'appearance', label: 'Appearance', icon: Palette },
+    { id: 'billing', label: 'Billing', icon: CreditCard },
     { id: 'data', label: 'Data', icon: Download },
   ];
 
@@ -99,17 +147,107 @@ export const Settings: React.FC = () => {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (privacy.password !== privacy.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Simulate password change
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success('Password changed successfully!');
+      setPrivacy(prev => ({ ...prev, password: '', confirmPassword: '' }));
+    } catch (error) {
+      toast.error('Failed to change password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggle2FA = async () => {
+    setLoading(true);
+    try {
+      // Simulate 2FA toggle
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success(`Two-factor authentication ${privacy.twoFactor ? 'disabled' : 'enabled'}!`);
+      setPrivacy(prev => ({ ...prev, twoFactor: !prev.twoFactor }));
+    } catch (error) {
+      toast.error('Failed to update 2FA');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setProfileData(prev => ({ ...prev, avatar: e.target.files[0] }));
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Logged out successfully!');
+  };
+
+  const handleUpgradePlan = async () => {
+    setLoading(true);
+    try {
+      // Simulate plan upgrade
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setBilling(prev => ({ ...prev, plan: 'premium' }));
+      toast.success('Plan upgraded to Premium!');
+    } catch (error) {
+      toast.error('Failed to upgrade plan');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Profile Information
-              </h3>
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="relative group">
+                <motion.div 
+                  className="w-32 h-32 rounded-full overflow-hidden shadow-lg cursor-pointer"
+                  whileHover={{ scale: 1.05 }}
+                  onClick={handleAvatarClick}
+                >
+                  {profileData.avatar ? (
+                    <img 
+                      src={URL.createObjectURL(profileData.avatar)} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold">
+                      {profileData.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </motion.div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleAvatarChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <motion.div 
+                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                  initial={false}
+                >
+                  <Upload className="text-white" size={24} />
+                </motion.div>
+              </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex-1 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Full Name
@@ -145,104 +283,260 @@ export const Settings: React.FC = () => {
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Account Type
-                  </label>
-                  <div className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      userProfile?.isPremium 
-                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    }`}>
-                      {userProfile?.isPremium ? 'Premium' : 'Free'}
-                    </span>
-                  </div>
-                </div>
               </div>
-              
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Bio
-                </label>
-                <textarea
-                  value={profileData.bio}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Tell us about yourself..."
-                />
-              </div>
-              
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSaveProfile}
-                disabled={loading}
-                className="mt-4 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {loading ? 'Saving...' : 'Save Changes'}
-              </motion.button>
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Bio
+              </label>
+              <textarea
+                value={profileData.bio}
+                onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Tell us about yourself..."
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Language
+                </label>
+                <select
+                  value={profileData.language}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, language: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Timezone
+                </label>
+                <select
+                  value={profileData.timezone}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, timezone: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="UTC">UTC</option>
+                  <option value="PST">PST</option>
+                  <option value="EST">EST</option>
+                  <option value="CET">CET</option>
+                </select>
+              </div>
+            </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSaveProfile}
+              disabled={loading}
+              className="mt-4 flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+            >
+              <Save className="w-5 h-5 mr-2" />
+              {loading ? 'Saving...' : 'Save Changes'}
+            </motion.button>
           </div>
         );
 
       case 'notifications':
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Notification Preferences
-              </h3>
-              
-              <div className="space-y-4">
-                {Object.entries(notifications).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      {key === 'emailNotifications' && <Mail className="w-5 h-5 text-gray-400 mr-3" />}
-                      {key === 'pushNotifications' && <Smartphone className="w-5 h-5 text-gray-400 mr-3" />}
-                      {key === 'taskReminders' && <Bell className="w-5 h-5 text-gray-400 mr-3" />}
-                      {key === 'weeklyReports' && <Globe className="w-5 h-5 text-gray-400 mr-3" />}
-                      {key === 'marketingEmails' && <Mail className="w-5 h-5 text-gray-400 mr-3" />}
-                      
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {key === 'emailNotifications' && 'Receive notifications via email'}
-                          {key === 'pushNotifications' && 'Receive push notifications in browser'}
-                          {key === 'taskReminders' && 'Get reminded about upcoming tasks'}
-                          {key === 'weeklyReports' && 'Weekly productivity reports'}
-                          {key === 'marketingEmails' && 'Product updates and tips'}
-                        </div>
-                      </div>
-                    </div>
-                    
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Mail size={20} />
+                  Email Notifications
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Task Reminders</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={value}
-                        onChange={(e) => setNotifications(prev => ({ ...prev, [key]: e.target.checked }))}
+                        checked={notifications.taskReminders}
+                        onChange={(e) => setNotifications(prev => ({ ...prev, taskReminders: e.target.checked }))}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
-                ))}
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Weekly Reports</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifications.weeklyReports}
+                        onChange={(e) => setNotifications(prev => ({ ...prev, weeklyReports: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Marketing Emails</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifications.marketingEmails}
+                        onChange={(e) => setNotifications(prev => ({ ...prev, marketingEmails: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Mobile size={20} />
+                  Push Notifications
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Enable Push</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifications.pushNotifications}
+                        onChange={(e) => setNotifications(prev => ({ ...prev, pushNotifications: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Sound Alerts</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifications.soundAlerts}
+                        onChange={(e) => setNotifications(prev => ({ ...prev, soundAlerts: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Vibration</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifications.vibration}
+                        onChange={(e) => setNotifications(prev => ({ ...prev, vibration: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+            >
+              <Save className="w-5 h-5 mr-2" />
+              Save Notification Settings
+            </motion.button>
           </div>
         );
 
       case 'privacy':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Privacy Settings
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Lock size={20} />
+                Security
+              </h3>
+              
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      Two-Factor Authentication
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Add an extra layer of security to your account
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={privacy.twoFactor}
+                      onChange={handleToggle2FA}
+                      className="sr-only peer"
+                      disabled={loading}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Change Password
+                  </label>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type={privacy.showPassword ? 'text' : 'password'}
+                        value={privacy.password}
+                        onChange={(e) => setPrivacy(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="New password"
+                        className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPrivacy(prev => ({ ...prev, showPassword: !prev.showPassword }))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {privacy.showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                    
+                    <input
+                      type={privacy.showPassword ? 'text' : 'password'}
+                      value={privacy.confirmPassword}
+                      onChange={(e) => setPrivacy(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      placeholder="Confirm new password"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleChangePassword}
+                      disabled={loading || !privacy.password || privacy.password !== privacy.confirmPassword}
+                      className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Key className="w-4 h-4 mr-2" />
+                      {loading ? 'Changing...' : 'Change Password'}
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Shield size={20} />
+                Privacy
               </h3>
               
               <div className="space-y-6">
@@ -262,7 +556,7 @@ export const Settings: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       Data Sharing
                     </div>
@@ -282,9 +576,9 @@ export const Settings: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      Analytics
+                      Analytics Tracking
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       Help us understand how you use the app
@@ -307,77 +601,196 @@ export const Settings: React.FC = () => {
 
       case 'appearance':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Appearance Settings
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <ThemeIcon size={20} />
+                Theme
               </h3>
               
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-                    Theme
-                  </label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => theme === 'dark' && toggleTheme()}
-                      className={`p-4 border-2 rounded-lg flex items-center justify-center ${
-                        theme === 'light' 
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                          : 'border-gray-300 dark:border-gray-600'
-                      }`}
-                    >
-                      <Sun className="w-6 h-6 mr-2" />
-                      Light Mode
-                    </motion.button>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => theme === 'light' && toggleTheme()}
-                      className={`p-4 border-2 rounded-lg flex items-center justify-center ${
-                        theme === 'dark' 
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                          : 'border-gray-300 dark:border-gray-600'
-                      }`}
-                    >
-                      <Moon className="w-6 h-6 mr-2" />
-                      Dark Mode
-                    </motion.button>
-                  </div>
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => theme === 'dark' && toggleTheme()}
+                  className={`p-6 border-2 rounded-xl flex flex-col items-center justify-center ${
+                    theme === 'light' 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  } shadow-sm`}
+                >
+                  <Sun className="w-8 h-8 mb-2" />
+                  <span className="font-medium">Light Mode</span>
+                </motion.button>
                 
-                {userProfile?.isPremium && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-                      Premium Themes
-                    </label>
-                    <div className="grid grid-cols-3 gap-4">
-                      {['Ocean', 'Forest', 'Sunset', 'Midnight', 'Rose', 'Mint'].map((themeName) => (
-                        <motion.button
-                          key={themeName}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg text-center hover:border-blue-500 transition-colors"
-                        >
-                          <div className={`w-full h-8 rounded mb-2 bg-gradient-to-r ${
-                            themeName === 'Ocean' ? 'from-blue-400 to-blue-600' :
-                            themeName === 'Forest' ? 'from-green-400 to-green-600' :
-                            themeName === 'Sunset' ? 'from-orange-400 to-red-500' :
-                            themeName === 'Midnight' ? 'from-gray-800 to-black' :
-                            themeName === 'Rose' ? 'from-pink-400 to-rose-500' :
-                            'from-emerald-400 to-teal-500'
-                          }`} />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {themeName}
-                          </span>
-                        </motion.button>
-                      ))}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => theme === 'light' && toggleTheme()}
+                  className={`p-6 border-2 rounded-xl flex flex-col items-center justify-center ${
+                    theme === 'dark' 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  } shadow-sm`}
+                >
+                  <Moon className="w-8 h-8 mb-2" />
+                  <span className="font-medium">Dark Mode</span>
+                </motion.button>
+              </div>
+            </div>
+            
+            {userProfile?.isPremium && (
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Crown size={20} className="text-yellow-500" />
+                  Premium Color Schemes
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {['Default', 'Ocean', 'Forest', 'Sunset', 'Midnight', 'Rose', 'Mint'].map((scheme) => (
+                    <motion.button
+                      key={scheme}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`p-4 border-2 rounded-xl text-center ${
+                        appearance.colorScheme === scheme.toLowerCase()
+                          ? 'border-blue-500' 
+                          : 'border-gray-300 dark:border-gray-600'
+                      } shadow-sm`}
+                      onClick={() => setAppearance(prev => ({ ...prev, colorScheme: scheme.toLowerCase() }))}
+                    >
+                      <div className={`w-full h-16 rounded mb-2 bg-gradient-to-r ${
+                        scheme === 'Ocean' ? 'from-blue-400 to-blue-600' :
+                        scheme === 'Forest' ? 'from-green-400 to-green-600' :
+                        scheme === 'Sunset' ? 'from-orange-400 to-red-500' :
+                        scheme === 'Midnight' ? 'from-gray-800 to-black' :
+                        scheme === 'Rose' ? 'from-pink-400 to-rose-500' :
+                        scheme === 'Mint' ? 'from-emerald-400 to-teal-500' :
+                        'from-gray-400 to-gray-600'
+                      }`} />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {scheme}
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Accessibility size={20} />
+                Accessibility
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      Reduced Motion
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Reduce animations for motion sensitivity
                     </div>
                   </div>
-                )}
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={appearance.reducedMotion}
+                      onChange={(e) => setAppearance(prev => ({ ...prev, reducedMotion: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      High Contrast Mode
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Increase color contrast for better readability
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={appearance.highContrast}
+                      onChange={(e) => setAppearance(prev => ({ ...prev, highContrast: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Font Size
+                  </label>
+                  <select
+                    value={appearance.fontSize}
+                    onChange={(e) => setAppearance(prev => ({ ...prev, fontSize: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+            >
+              <Save className="w-5 h-5 mr-2" />
+              Save Appearance Settings
+            </motion.button>
+          </div>
+        );
+
+      case 'billing':
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <CreditCard size={20} />
+                Current Plan
+              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-2xl font-bold capitalize">{billing.plan}</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  billing.plan === 'premium' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                }`}>
+                  Active
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Next billing date: {billing.nextBilling}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Card ending in {billing.cardLast4}
+              </p>
+            </div>
+            
+            {billing.plan !== 'premium' && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleUpgradePlan}
+                disabled={loading}
+                className="w-full flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-md"
+              >
+                <Crown className="w-5 h-5 mr-2 text-yellow-300" />
+                {loading ? 'Upgrading...' : 'Upgrade to Premium'}
+              </motion.button>
+            )}
+            
+            <div className="space-y-4">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Billing History</h3>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center text-gray-500 dark:text-gray-400">
+                No billing history yet
               </div>
             </div>
           </div>
@@ -386,56 +799,84 @@ export const Settings: React.FC = () => {
       case 'data':
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Data Management
-              </h3>
-              
-              <div className="space-y-6">
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <div className="flex items-start">
-                    <Download className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
-                        Export Your Data
-                      </h4>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                        Download all your tasks, settings, and account data in JSON format.
-                      </p>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleExportData}
-                        disabled={loading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-                      >
-                        {loading ? 'Exporting...' : 'Export Data'}
-                      </motion.button>
-                    </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+              <div className="flex items-start mb-4">
+                <Download className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3 mt-1" />
+                <div className="flex-1">
+                  <h4 className="text-base font-medium text-blue-900 dark:text-blue-100 mb-1">
+                    Export Your Data
+                  </h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                    Download all your tasks, settings, and account data in JSON or CSV format.
+                  </p>
+                  <div className="flex gap-4">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleExportData}
+                      disabled={loading}
+                      className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {loading ? 'Exporting...' : 'Export JSON'}
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleExportData}
+                      disabled={loading}
+                      className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {loading ? 'Exporting...' : 'Export CSV'}
+                    </motion.button>
                   </div>
                 </div>
-                
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <div className="flex items-start">
-                    <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400 mr-3 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">
-                        Delete Account
-                      </h4>
-                      <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                        Permanently delete your account and all associated data. This action cannot be undone.
-                      </p>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleDeleteAccount}
-                        disabled={loading}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-                      >
-                        {loading ? 'Processing...' : 'Delete Account'}
-                      </motion.button>
-                    </div>
-                  </div>
+              </div>
+            </div>
+            
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6">
+              <div className="flex items-start mb-4">
+                <Upload className="w-6 h-6 text-green-600 dark:text-green-400 mr-3 mt-1" />
+                <div className="flex-1">
+                  <h4 className="text-base font-medium text-green-900 dark:text-green-100 mb-1">
+                    Import Data
+                  </h4>
+                  <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                    Upload your tasks from JSON or CSV file.
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import Data
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
+              <div className="flex items-start mb-4">
+                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400 mr-3 mt-1" />
+                <div className="flex-1">
+                  <h4 className="text-base font-medium text-red-900 dark:text-red-100 mb-1">
+                    Delete Account
+                  </h4>
+                  <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                    Permanently delete your account and all associated data. This action cannot be undone.
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleDeleteAccount}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {loading ? 'Processing...' : 'Delete Account'}
+                  </motion.button>
                 </div>
               </div>
             </div>
@@ -448,17 +889,18 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
           Settings
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
           Manage your account preferences and application settings.
         </p>
       </motion.div>
@@ -466,35 +908,48 @@ export const Settings: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
-          className="lg:w-64 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4"
+          transition={{ duration: 0.5 }}
+          className="lg:w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 sticky top-4 h-fit"
         >
-          <nav className="space-y-2">
+          <nav className="space-y-1">
             {tabs.map((tab) => (
               <motion.button
                 key={tab.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center px-4 py-3 rounded-lg text-base font-medium transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
+                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 shadow-sm'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
-                <tab.icon size={18} className="mr-3" />
+                <tab.icon size={20} className="mr-3" />
                 {tab.label}
               </motion.button>
             ))}
           </nav>
+          
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleLogout}
+            className="w-full flex items-center px-4 py-3 rounded-lg text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors mt-6"
+          >
+            <LogOut size={20} className="mr-3" />
+            Log Out
+          </motion.button>
         </motion.div>
 
         {/* Content */}
         <motion.div
+          key={activeTab}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
+          transition={{ duration: 0.3 }}
+          className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 md:p-8"
         >
           {renderTabContent()}
         </motion.div>
