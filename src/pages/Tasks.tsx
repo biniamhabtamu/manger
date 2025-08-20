@@ -5,6 +5,7 @@ import { useTasks } from '../hooks/useTasks';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskStatus, TaskCategory } from '../types/task';
+import { BottomBar } from '../components/layout/BottomBar';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -424,13 +425,13 @@ export const Tasks: React.FC = () => {
         className="fixed bottom-4 right-4 bg-purple-500 text-white p-4 rounded-full shadow-lg hover:bg-purple-600 transition-colors"
         aria-label="Export Tasks"
       >
-        <Download size={24} />
       </motion.button>
 
       <TaskForm
         isOpen={showTaskForm}
         onClose={() => setShowTaskForm(false)}
       />
+      <BottomBar />
     </div>
   );
 };

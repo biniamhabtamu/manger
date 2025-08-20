@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { BottomBar } from '../components/layout/BottomBar';
 
 const features = [
   {
@@ -381,6 +382,7 @@ export const Premium: React.FC = () => {
           </div>
         </div>
       </motion.div>
+      <BottomBar />
     </div>
   );
 };

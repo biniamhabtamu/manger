@@ -5,6 +5,7 @@ import 'react-day-picker/dist/style.css';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CheckCircle, Circle, AlertCircle, Clock, Archive, Plus, Filter } from 'lucide-react';
 import { Task, SubTask, TaskStatus, Priority, TaskCategory } from './task';
 import { TaskForm } from '../components/tasks/TaskForm'; // Assuming TaskForm is available
+import { BottomBar } from '../components/layout/BottomBar';
 
 interface CalendarPageProps {
   tasks: Task[];
@@ -450,6 +451,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
         onClose={() => setShowTaskForm(false)}
         initialDueDate={selectedDay}
       />
+      <BottomBar />
     </div>
   );
 };

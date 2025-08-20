@@ -17,6 +17,7 @@ import { ProgressChart } from '../components/dashboard/ProgressChart';
 import { useTasks } from '../hooks/useTasks';
 import { useAuth } from '../contexts/AuthContext';
 import { TaskCard } from '../components/tasks/TaskCard'; // Assuming TaskCard exists
+import { BottomBar } from '../components/layout/BottomBar';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -79,7 +80,71 @@ export const Dashboard: React.FC = () => {
           Here's what's happening with your tasks today. Stay productive!
         </p>
       </motion.div>
+{/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
+      >
+        <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+          Quick Actions
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Link to="/tasks/">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowTaskForm(true)}
+              className="p-4 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl text-center transition-colors shadow-md"
+            >
+              <Plus className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+              <span className="text-base font-medium text-blue-600 dark:text-blue-400">
+                Add Task
+              </span>
+            </motion.button>
+          </Link>
 
+          <Link to="/CalendarPage">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-4 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-xl text-center transition-colors shadow-md"
+            >
+              <Calendar className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+              <span className="text-base font-medium text-green-600 dark:text-green-400">
+                View Calendar
+              </span>
+            </motion.button>
+          </Link>
+
+          <Link to="/analytics">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-4 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 rounded-xl text-center transition-colors shadow-md"
+            >
+              <TrendingUp className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
+              <span className="text-base font-medium text-purple-600 dark:text-purple-400">
+                Analytics
+              </span>
+            </motion.button>
+          </Link>
+
+          <Link to="/goals">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-4 bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 rounded-xl text-center transition-colors shadow-md"
+            >
+              <Target className="w-8 h-8 text-yellow-600 dark:text-yellow-400 mx-auto mb-2" />
+              <span className="text-base font-medium text-yellow-600 dark:text-yellow-400">
+                Set Goals
+              </span>
+            </motion.button>
+          </Link>
+        </div>
+      </motion.div>
       {/* Stats Grid */}
       <motion.div 
         variants={containerVariants}
@@ -125,91 +190,8 @@ export const Dashboard: React.FC = () => {
         </motion.div>
       </motion.div>
 
-      {/* Progress Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
-        >
-          <ProgressChart stats={stats} type="doughnut" />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
-        >
-          <ProgressChart stats={stats} type="bar" />
-        </motion.div>
-      </div>
-
-      {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
-      >
-        <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Link to="/tasks/new">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-4 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl text-center transition-colors shadow-md"
-            >
-              <Plus className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-              <span className="text-base font-medium text-blue-600 dark:text-blue-400">
-                Add Task
-              </span>
-            </motion.button>
-          </Link>
-
-          <Link to="/calendar">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-4 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-xl text-center transition-colors shadow-md"
-            >
-              <Calendar className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
-              <span className="text-base font-medium text-green-600 dark:text-green-400">
-                View Calendar
-              </span>
-            </motion.button>
-          </Link>
-
-          <Link to="/analytics">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-4 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 rounded-xl text-center transition-colors shadow-md"
-            >
-              <TrendingUp className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-              <span className="text-base font-medium text-purple-600 dark:text-purple-400">
-                Analytics
-              </span>
-            </motion.button>
-          </Link>
-
-          <Link to="/goals">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-4 bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 rounded-xl text-center transition-colors shadow-md"
-            >
-              <Target className="w-8 h-8 text-yellow-600 dark:text-yellow-400 mx-auto mb-2" />
-              <span className="text-base font-medium text-yellow-600 dark:text-yellow-400">
-                Set Goals
-              </span>
-            </motion.button>
-          </Link>
-        </div>
-      </motion.div>
+     
+      
 
       {/* Completion Rate */}
       <motion.div
@@ -360,6 +342,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </motion.div>
+      <BottomBar />
     </div>
   );
 };

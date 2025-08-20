@@ -26,6 +26,7 @@ import { useTasks } from '../hooks/useTasks';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskCategory, TaskStatus } from '../types/task';
+import { BottomBar } from '../components/layout/BottomBar';
 
 const categoryConfig = {
   'code-tasks': {
@@ -566,22 +567,7 @@ export const Categories: React.FC = () => {
       )}
 
       {/* Export Button */}
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => {
-          const csv = filteredTasks.map(task => `${task.title},${task.description},${task.status},${task.priority},${task.dueDate ? task.dueDate.toISOString() : ''}`).join('\n');
-          const blob = new Blob([csv], { type: 'text/csv' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'tasks.csv';
-          a.click();
-        }}
-        className="fixed bottom-4 right-4 bg-purple-500 text-white p-4 rounded-full shadow-lg hover:bg-purple-600 transition-colors md:bottom-8 md:right-8"
-      >
-        <Download size={24} />
-      </motion.button>
+     
 
       {/* Floating Add Button on Mobile */}
       {isMobile && (
@@ -601,6 +587,7 @@ export const Categories: React.FC = () => {
         onClose={() => setShowTaskForm(false)}
         category={currentCategory}
       />
+      <BottomBar />
     </div>
   );
 };

@@ -16,6 +16,7 @@ import { useTasks } from '../hooks/useTasks';
 import { ProgressChart } from '../components/dashboard/ProgressChart';
 import { StatCard } from '../components/dashboard/StatCard';
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { BottomBar } from '../components/layout/BottomBar';
 
 export const Analytics: React.FC = () => {
   const { tasks, stats, loading } = useTasks();
@@ -125,15 +126,7 @@ export const Analytics: React.FC = () => {
             <option value="month">Last 30 days</option>
             <option value="year">Last year</option>
           </select>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Download size={16} className="mr-2" />
-            Export
-          </motion.button>
+         
         </div>
       </motion.div>
 
@@ -392,6 +385,7 @@ export const Analytics: React.FC = () => {
           </div>
         </div>
       </motion.div>
+      <BottomBar />
     </div>
   );
 };

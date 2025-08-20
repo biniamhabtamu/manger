@@ -27,6 +27,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTasks } from '../hooks/useTasks';
 import { format } from 'date-fns';
 import { ProgressChart } from '../components/dashboard/ProgressChart'; // Assuming this component exists
+import { BottomBar } from '../components/layout/BottomBar';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -646,6 +647,7 @@ export const Profile: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <BottomBar />
     </div>
   );
 };

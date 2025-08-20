@@ -16,6 +16,7 @@ import { Profile } from './pages/Profile';
 import { Analytics } from './pages/Analytics';
 import { OfflineIndicator } from './components/common/OfflineIndicator';
 import { CalendarPage } from './pages/CalendarPage';
+import { BottomBar } from './components/layout/BottomBar';
 
 // Capacitor App with safe initialization
 let CapacitorApp;
@@ -209,6 +210,16 @@ function App() {
                   <ProtectedRoute>
                     <Layout>
                       <Dashboard />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/bottombar"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <BottomBar />
                     </Layout>
                   </ProtectedRoute>
                 }

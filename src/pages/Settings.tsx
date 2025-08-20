@@ -28,6 +28,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import toast from 'react-hot-toast';
+import { BottomBar } from '../components/layout/BottomBar';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -954,6 +955,7 @@ export const Settings: React.FC = () => {
           {renderTabContent()}
         </motion.div>
       </div>
+      <BottomBar />
     </div>
   );
 };
