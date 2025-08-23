@@ -204,6 +204,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              
               <Route
                 path="*"
                 element={

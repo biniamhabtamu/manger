@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -10,7 +10,16 @@ import {
   AlertTriangle,
   Filter,
   Download,
-  RefreshCw
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  PieChart,
+  Activity,
+  Award,
+  Sparkles,
+  Lightbulb,
+  BarChart2,
+  Smartphone
 } from 'lucide-react';
 import { useTasks } from '../hooks/useTasks';
 import { ProgressChart } from '../components/dashboard/ProgressChart';
@@ -22,11 +31,39 @@ export const Analytics: React.FC = () => {
   const { tasks, stats, loading } = useTasks();
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'overview' | 'categories' | 'priorities' | 'insights'>('overview');
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    productivity: true,
+    categories: false,
+    priorities: false,
+    insights: false
+  });
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Simulate refresh
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  useEffect(() => {
+    // Add specific mobile UI event listeners if needed
+  }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading your analytics...</p>
+        </div>
       </div>
     );
   }
@@ -48,7 +85,7 @@ export const Analytics: React.FC = () => {
       const completedTasks = dayTasks.filter(task => task.status === 'completed');
       
       return {
-        date: format(date, 'MMM dd'),
+        date: format(date, timeRange === 'week' ? 'EEE' : timeRange === 'month' ? 'MMM dd' : 'MMM yy'),
         created: dayTasks.length,
         completed: completedTasks.length,
         completionRate: dayTasks.length > 0 ? Math.round((completedTasks.length / dayTasks.length) * 100) : 0
@@ -99,198 +136,240 @@ export const Analytics: React.FC = () => {
   const averageTasksPerDay = productivityData.length > 0 ? 
     Math.round(productivityData.reduce((sum, day) => sum + day.created, 0) / productivityData.length) : 0;
 
+  // New feature: Productivity score (0-100)
+  const productivityScore = Math.min(100, Math.round(
+    (completionRate * 0.4) + 
+    (Math.min(averageTasksPerDay, 10) * 6) + 
+    (Math.max(0, 100 - (stats.overdue * 5)))
+  ));
+
+  // New feature: Weekly comparison
+  const weeklyComparison = 12; // Example value - would need real data
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 pb-20">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-4 border-b border-gray-200 dark:border-gray-700"
       >
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Analytics
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Insights into your productivity and task management patterns
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as 'week' | 'month' | 'year')}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="week">Last 7 days</option>
-            <option value="month">Last 30 days</option>
-            <option value="year">Last year</option>
-          </select>
-         
-        </div>
-      </motion.div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Overall Completion Rate"
-          value={`${completionRate}%`}
-          icon={Target}
-          color="green"
-          trend={{ value: 5, isPositive: true }}
-        />
-        <StatCard
-          title="Average Tasks/Day"
-          value={averageTasksPerDay}
-          icon={Calendar}
-          color="blue"
-          trend={{ value: 12, isPositive: true }}
-        />
-        <StatCard
-          title="Overdue Tasks"
-          value={stats.overdue}
-          icon={AlertTriangle}
-          color="red"
-          trend={{ value: 8, isPositive: false }}
-        />
-        <StatCard
-          title="Active Streak"
-          value="7 days"
-          icon={TrendingUp}
-          color="purple"
-          trend={{ value: 15, isPositive: true }}
-        />
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Task Status Distribution */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
-        >
-          <ProgressChart stats={stats} type="doughnut" />
-        </motion.div>
-
-        {/* Category Performance */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
-        >
-          <ProgressChart stats={stats} type="bar" />
-        </motion.div>
-      </div>
-
-      {/* Productivity Trends */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Productivity Trends
-          </h3>
-          <div className="flex items-center space-x-4 text-sm">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-              <span className="text-gray-600 dark:text-gray-400">Tasks Created</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span className="text-gray-600 dark:text-gray-400">Tasks Completed</span>
-            </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Analytics
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Insights into your productivity
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRefresh}
+              className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700"
+            >
+              <RefreshCw size={18} className={`text-gray-600 dark:text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
+            </motion.button>
+            
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value as 'week' | 'month' | 'year')}
+              className="text-sm px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            >
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+            </select>
           </div>
         </div>
-        
-        <div className="h-64 flex items-end justify-between space-x-2">
-          {productivityData.map((day, index) => (
-            <div key={index} className="flex-1 flex flex-col items-center">
-              <div className="w-full flex flex-col items-center space-y-1 mb-2">
-                <div 
-                  className="w-full bg-blue-500 rounded-t"
-                  style={{ height: `${Math.max(day.created * 8, 4)}px` }}
-                  title={`${day.created} tasks created`}
-                />
-                <div 
-                  className="w-full bg-green-500 rounded-b"
-                  style={{ height: `${Math.max(day.completed * 8, 4)}px` }}
-                  title={`${day.completed} tasks completed`}
-                />
-              </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400 transform -rotate-45 origin-center">
-                {day.date}
-              </span>
-            </div>
-          ))}
+
+        {/* Tabs */}
+        <div className="flex mt-4 overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <div className="flex space-x-2 pb-1">
+            {[
+              { id: 'overview', label: 'Overview', icon: BarChart2 },
+              { id: 'categories', label: 'Categories', icon: PieChart },
+              { id: 'priorities', label: 'Priorities', icon: Activity },
+              { id: 'insights', label: 'Insights', icon: Lightbulb }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <motion.button
+                  key={tab.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`px-4 py-2 rounded-full flex items-center space-x-1 text-sm font-medium whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 shadow-sm'
+                  }`}
+                >
+                  <Icon size={16} />
+                  <span>{tab.label}</span>
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
       </motion.div>
 
-      {/* Category Performance Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
-      >
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Category Performance
-          </h3>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Total Tasks
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Completed
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Completion Rate
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Progress
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="p-4 space-y-4">
+        {/* Productivity Score Card - New Feature */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-5 text-white shadow-lg"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Productivity Score</h2>
+            <Award size={20} />
+          </div>
+          
+          <div className="flex items-end justify-between">
+            <div className="flex flex-col">
+              <span className="text-3xl font-bold">{productivityScore}</span>
+              <span className="text-blue-100 text-sm">out of 100</span>
+            </div>
+            
+            <div className="flex items-center">
+              <TrendingUp size={16} className="mr-1" />
+              <span className="text-sm">+{weeklyComparison}% from last week</span>
+            </div>
+          </div>
+          
+          <div className="mt-4 w-full bg-white/20 rounded-full h-2">
+            <div 
+              className="bg-white h-2 rounded-full transition-all duration-500"
+              style={{ width: `${productivityScore}%` }}
+            />
+          </div>
+          
+          <p className="text-blue-100 text-xs mt-3">
+            {productivityScore >= 80 
+              ? "You're doing amazing! Keep up the great work!" 
+              : productivityScore >= 60 
+              ? "Good progress! You're on the right track."
+              : "Let's focus on completing more tasks this week."}
+          </p>
+        </motion.div>
+
+        {/* Key Metrics */}
+        <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <StatCard
+                  title="Completion Rate"
+                  value={`${completionRate}%`}
+                  icon={Target}
+                  color="green"
+                  trend={{ value: 5, isPositive: true }}
+                  compact
+                />
+                <StatCard
+                  title="Tasks/Day"
+                  value={averageTasksPerDay}
+                  icon={Calendar}
+                  color="blue"
+                  trend={{ value: 12, isPositive: true }}
+                  compact
+                />
+                <StatCard
+                  title="Overdue"
+                  value={stats.overdue}
+                  icon={AlertTriangle}
+                  color="red"
+                  trend={{ value: 8, isPositive: false }}
+                  compact
+                />
+                <StatCard
+                  title="Active Streak"
+                  value="7 days"
+                  icon={TrendingUp}
+                  color="purple"
+                  trend={{ value: 15, isPositive: true }}
+                  compact
+                />
+              </div>
+
+              {/* Task Status Distribution */}
+              <motion.div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Task Status</h3>
+                  <div className="p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                    <PieChart size={16} className="text-gray-600 dark:text-gray-300" />
+                  </div>
+                </div>
+                <ProgressChart stats={stats} type="doughnut" mobile />
+              </motion.div>
+
+              {/* Productivity Trends */}
+              <motion.div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Productivity Trends</h3>
+                  <div className="flex items-center space-x-3 text-xs">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+                      <span className="text-gray-600 dark:text-gray-400">Created</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                      <span className="text-gray-600 dark:text-gray-400">Completed</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="h-40 flex items-end justify-between space-x-1 px-1">
+                  {productivityData.slice(-7).map((day, index) => (
+                    <div key={index} className="flex-1 flex flex-col items-center">
+                      <div className="w-full flex flex-col items-center space-y-1 mb-2">
+                        <div 
+                          className="w-full bg-blue-500 rounded-t"
+                          style={{ height: `${Math.max(day.created * 6, 4)}px` }}
+                          title={`${day.created} tasks created`}
+                        />
+                        <div 
+                          className="w-full bg-green-500 rounded-b"
+                          style={{ height: `${Math.max(day.completed * 6, 4)}px` }}
+                          title={`${day.completed} tasks completed`}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {day.date}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Category Performance */}
+          {activeTab === 'categories' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
               {categoryPerformance.map((category, index) => (
-                <motion.tr
+                <motion.div
                   key={category.category}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {category.category}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {category.total}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {category.completed}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium text-gray-900 dark:text-white">{category.category}</h3>
+                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${
                       category.completionRate >= 80 
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                         : category.completionRate >= 60
@@ -299,92 +378,176 @@ export const Analytics: React.FC = () => {
                     }`}>
                       {category.completionRate}%
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${category.completionRate}%` }}
-                      />
-                    </div>
-                  </td>
-                </motion.tr>
+                  </div>
+                  
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    <span>{category.completed}/{category.total} completed</span>
+                    <span>{category.total} total</span>
+                  </div>
+                  
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="h-2 rounded-full transition-all duration-300 bg-gradient-to-r from-blue-500 to-indigo-600"
+                      style={{ width: `${category.completionRate}%` }}
+                    />
+                  </div>
+                </motion.div>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
-
-      {/* Priority Distribution */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
-      >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-          Task Priority Distribution
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {priorityDistribution.map((priority, index) => (
-            <motion.div
-              key={priority.priority}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.7 + index * 0.1 }}
-              className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-            >
-              <div className={`text-2xl font-bold mb-2 ${
-                priority.priority === 'Urgent' ? 'text-red-600 dark:text-red-400' :
-                priority.priority === 'High' ? 'text-orange-600 dark:text-orange-400' :
-                priority.priority === 'Medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                'text-gray-600 dark:text-gray-400'
-              }`}>
-                {priority.percentage}%
-              </div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                {priority.priority}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                {priority.completed}/{priority.total} completed
-              </div>
             </motion.div>
-          ))}
-        </div>
-      </motion.div>
+          )}
 
-      {/* Insights */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-6 text-white"
-      >
-        <h3 className="text-xl font-semibold mb-4">📊 Productivity Insights</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="text-2xl font-bold mb-1">{completionRate}%</div>
-            <div className="text-purple-100 text-sm">
-              Overall completion rate - {completionRate >= 70 ? 'Excellent!' : completionRate >= 50 ? 'Good progress' : 'Room for improvement'}
-            </div>
+          {/* Priority Distribution */}
+          {activeTab === 'priorities' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              {priorityDistribution.map((priority, index) => (
+                <motion.div
+                  key={priority.priority}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`font-medium ${
+                      priority.priority === 'Urgent' ? 'text-red-600 dark:text-red-400' :
+                      priority.priority === 'High' ? 'text-orange-600 dark:text-orange-400' :
+                      priority.priority === 'Medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                      'text-gray-600 dark:text-gray-400'
+                    }`}>
+                      {priority.priority}
+                    </span>
+                    <span className="text-lg font-bold">{priority.percentage}%</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    <span>{priority.completed}/{priority.total} completed</span>
+                  </div>
+                  
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${priority.percentage}%`,
+                        backgroundColor: 
+                          priority.priority === 'Urgent' ? '#ef4444' :
+                          priority.priority === 'High' ? '#f97316' :
+                          priority.priority === 'Medium' ? '#eab308' :
+                          '#6b7280'
+                      }}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Insights */}
+          {activeTab === 'insights' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              <motion.div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-5 text-white shadow-lg">
+                <h3 className="font-semibold mb-3 flex items-center">
+                  <Sparkles size={18} className="mr-2" />
+                  Productivity Insights
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold">{completionRate}%</div>
+                      <div className="text-purple-100 text-sm">Completion Rate</div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`flex items-center justify-end ${completionRate >= 70 ? 'text-green-300' : 'text-yellow-300'}`}>
+                        {completionRate >= 70 ? 'Excellent! ' : 'Good progress '}
+                        {completionRate >= 70 ? '🎉' : '👍'}
+                      </div>
+                      <div className="text-purple-100 text-xs">
+                        {completionRate >= 70 ? 'Ahead of most users' : 'Keep going!'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold">{averageTasksPerDay}</div>
+                      <div className="text-purple-100 text-sm">Avg Tasks/Day</div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`flex items-center justify-end ${averageTasksPerDay >= 5 ? 'text-green-300' : 'text-yellow-300'}`}>
+                        {averageTasksPerDay >= 5 ? 'Very productive! ' : 'Steady pace '}
+                        {averageTasksPerDay >= 5 ? '🔥' : '👌'}
+                      </div>
+                      <div className="text-purple-100 text-xs">
+                        {averageTasksPerDay >= 5 ? 'You\'re on fire!' : 'Consistency is key'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold">
+                        {categoryPerformance.reduce((best, cat) => 
+                          cat.completionRate > best.completionRate ? cat : best, 
+                          categoryPerformance[0])?.category || 'N/A'}
+                      </div>
+                      <div className="text-purple-100 text-sm">Strongest Category</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-green-300">Well done! 🌟</div>
+                      <div className="text-purple-100 text-xs">Focus on your strengths</div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+              
+              {/* Tips Card */}
+              <motion.div 
+                className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                  <Lightbulb size={18} className="mr-2 text-yellow-500" />
+                  Pro Tip
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  {completionRate < 70 
+                    ? "Try breaking larger tasks into smaller, manageable subtasks to improve your completion rate."
+                    : "Your completion rate is excellent! Consider taking on more challenging tasks to continue growing."}
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Optimization Notice - New Feature */}
+        <motion.div 
+          className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Smartphone size={18} className="text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
+          <div>
+            <h4 className="text-blue-800 dark:text-blue-200 font-medium text-sm">Mobile Optimized</h4>
+            <p className="text-blue-600 dark:text-blue-300 text-xs mt-1">
+              This view is specially designed for your mobile device. Swipe between tabs to explore different analytics.
+            </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="text-2xl font-bold mb-1">{averageTasksPerDay}</div>
-            <div className="text-purple-100 text-sm">
-              Average tasks per day - {averageTasksPerDay >= 5 ? 'Very productive!' : 'Steady pace'}
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="text-2xl font-bold mb-1">
-              {categoryPerformance.reduce((best, cat) => cat.completionRate > best.completionRate ? cat : best, categoryPerformance[0])?.category || 'N/A'}
-            </div>
-            <div className="text-purple-100 text-sm">
-              Your strongest category
-            </div>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
+
       <BottomBar />
     </div>
   );

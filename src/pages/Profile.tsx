@@ -21,12 +21,20 @@ import {
   Filter,
   Upload,
   Share2,
-  BarChart2
+  BarChart2,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Smartphone,
+  Bell,
+  Zap,
+  CheckCircle,
+  Star
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTasks } from '../hooks/useTasks';
 import { format } from 'date-fns';
-import { ProgressChart } from '../components/dashboard/ProgressChart'; // Assuming this component exists
+import { ProgressChart } from '../components/dashboard/ProgressChart';
 import { BottomBar } from '../components/layout/BottomBar';
 
 const containerVariants = {
@@ -59,6 +67,8 @@ export const Profile: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(true);
+  const [showStats, setShowStats] = useState(true);
 
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
   const filteredTasks = tasks
@@ -139,499 +149,430 @@ export const Profile: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 pb-20">
       {/* Profile Header */}
       <motion.div
-        initial={{ opacity: 0, y: -30 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden"
+        className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-b-3xl p-5 text-white shadow-lg relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mt-24 blur-xl"></div>
-        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
-          {/* Avatar */}
-          <div className="relative group">
-            <div className="w-32 h-32 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-4xl font-bold shadow-lg overflow-hidden">
-              {profileData.profilePic ? (
-                <img 
-                  src={URL.createObjectURL(profileData.profilePic)} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                userProfile?.name?.charAt(0).toUpperCase() || <User size={48} className="text-white/80" />
-              )}
-            </div>
-            <label className="absolute bottom-0 right-0 w-10 h-10 bg-white text-gray-600 rounded-full flex items-center justify-center shadow-md cursor-pointer transition-all group-hover:scale-110 group-hover:bg-gray-50">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <Upload size={20} />
-            </label>
-          </div>
-
-          {/* Profile Info */}
-          <div className="flex-1 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-              <h1 className="text-3xl md:text-4xl font-bold">
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={profileData.name}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                    className="bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-1 text-white placeholder-blue-200"
-                  />
-                ) : (
-                  profileData.name
-                )}
-              </h1>
-              {userProfile?.isPremium && (
-                <Crown className="w-6 h-6 text-yellow-300" />
-              )}
+        <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mt-16 blur-xl"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold">Profile</h1>
+            <div className="flex items-center gap-2">
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleShare}
+                className="p-2 bg-white/20 backdrop-blur-sm rounded-xl"
+              >
+                <Share2 size={18} />
+              </motion.button>
+              <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsEditing(!isEditing)}
-                className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-colors shadow-sm"
+                className="p-2 bg-white/20 backdrop-blur-sm rounded-xl"
               >
                 <Edit3 size={18} />
               </motion.button>
             </div>
-            
-            <p className="text-blue-100 mb-4 max-w-xl mx-auto md:mx-0">
-              {isEditing ? (
-                <textarea
-                  value={profileData.bio}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
-                  className="bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white placeholder-blue-200 w-full h-24 resize-none"
-                  placeholder="Tell us about yourself..."
-                />
-              ) : (
-                profileData.bio
-              )}
-            </p>
-
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm">
-              <div className="flex items-center">
-                <Mail className="w-5 h-5 text-white/80 mr-2" />
-                {userProfile?.email}
-              </div>
-              {userProfile?.phone && (
-                <div className="flex items-center">
-                  <Phone className="w-5 h-5 text-white/80 mr-2" />
-                  {userProfile.phone}
-                </div>
-              )}
-              <div className="flex items-center">
-                <Calendar className="w-5 h-5 text-white/80 mr-2" />
-                Joined {format(joinDate, 'MMMM yyyy')}
-              </div>
-            </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-3 md:gap-4 w-full md:w-auto">
-            <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 text-center shadow-inner">
-              <div className="text-2xl md:text-3xl font-bold">{stats.total}</div>
-              <div className="text-blue-100 text-sm">Total Tasks</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 text-center shadow-inner">
-              <div className="text-2xl md:text-3xl font-bold">{stats.completed}</div>
-              <div className="text-blue-100 text-sm">Completed</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 text-center shadow-inner">
-              <div className="text-2xl md:text-3xl font-bold">{completionRate}%</div>
-              <div className="text-blue-100 text-sm">Success Rate</div>
-            </div>
-          </div>
-        </div>
-
-        <AnimatePresence>
-          {isEditing && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-6 pt-6 border-t border-white/20 relative z-10"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-blue-100 text-sm mb-1">Location</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
-                    <input
-                      type="text"
-                      value={profileData.location}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
-                      className="w-full pl-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white placeholder-blue-200"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-blue-100 text-sm mb-1">Website</label>
-                  <div className="relative">
-                    <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
-                    <input
-                      type="url"
-                      value={profileData.website}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, website: e.target.value }))}
-                      className="w-full pl-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white placeholder-blue-200"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-blue-100 text-sm mb-1">GitHub</label>
-                  <div className="relative">
-                    <Github className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
-                    <input
-                      type="text"
-                      value={profileData.github}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, github: e.target.value }))}
-                      className="w-full pl-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white placeholder-blue-200"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-blue-100 text-sm mb-1">Twitter</label>
-                  <div className="relative">
-                    <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
-                    <input
-                      type="text"
-                      value={profileData.twitter}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, twitter: e.target.value }))}
-                      className="w-full pl-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white placeholder-blue-200"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-blue-100 text-sm mb-1">LinkedIn</label>
-                  <div className="relative">
-                    <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
-                    <input
-                      type="text"
-                      value={profileData.linkedin}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, linkedin: e.target.value }))}
-                      className="w-full pl-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white placeholder-blue-200"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-end mt-6 gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsEditing(false)}
-                  className="px-6 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-colors text-white font-medium"
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleSaveProfile}
-                  className="px-6 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium shadow-md"
-                >
-                  Save Changes
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Recent Activity */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
-          >
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                Recent Tasks
-              </h2>
-              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search tasks..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+          <div className="flex items-center gap-4 mb-4">
+            {/* Avatar */}
+            <div className="relative">
+              <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-2xl font-bold shadow-lg overflow-hidden">
+                {profileData.profilePic ? (
+                  <img 
+                    src={URL.createObjectURL(profileData.profilePic)} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
                   />
-                </div>
-                <select
-                  value={selectedFilter}
-                  onChange={(e) => setSelectedFilter(e.target.value)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
-                >
-                  <option value="all">All Status</option>
-                  <option value="todo">To Do</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
+                ) : (
+                  userProfile?.name?.charAt(0).toUpperCase() || <User size={32} className="text-white/80" />
+                )}
               </div>
+              <label className="absolute bottom-0 right-0 w-8 h-8 bg-white text-gray-600 rounded-full flex items-center justify-center shadow-md cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <Camera size={16} />
+              </label>
             </div>
-            
-            {filteredTasks.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-12">
-                No tasks found. Create your first task to get started!
-              </p>
-            ) : (
-              <div className="space-y-3">
-                <AnimatePresence>
-                  {filteredTasks.map((task) => (
-                    <motion.div
-                      key={task.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 dark:text-white">
-                          {task.title}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {task.category.replace('-', ' ')} • {task.priority} priority
-                        </p>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        task.status === 'completed' 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
-                          : task.status === 'in-progress'
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                      }`}>
-                        {task.status.replace('-', ' ')}
-                      </span>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
-          </motion.div>
 
-          {/* Task Statistics Chart */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
-          >
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
-              Task Statistics
-            </h2>
-            <ProgressChart stats={stats} type="bar" />
-          </motion.div>
-
-          {/* Achievements */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
-          >
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
-              Achievements
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {achievements.map((achievement, index) => (
-                <motion.div
-                  key={achievement.title}
-                  variants={itemVariants}
-                  custom={index}
-                  className={`p-4 rounded-xl border-2 shadow-sm ${
-                    achievement.earned
-                      ? `border-${achievement.color}-200 bg-${achievement.color}-50/50 dark:bg-${achievement.color}-900/20`
-                      : 'border-gray-200 bg-gray-50/50 dark:bg-gray-700/50 dark:border-gray-600'
-                  }`}
-                >
-                  <div className="flex items-start mb-3">
-                    <achievement.icon 
-                      className={`w-8 h-8 mr-3 ${
-                        achievement.earned 
-                          ? `text-${achievement.color}-600 dark:text-${achievement.color}-400`
-                          : 'text-gray-400'
-                      }`} 
-                    />
-                    <div className="flex-1">
-                      <h3 className={`font-medium text-lg ${
-                        achievement.earned 
-                          ? 'text-gray-900 dark:text-white'
-                          : 'text-gray-500 dark:text-gray-400'
-                      }`}>
-                        {achievement.title}
-                      </h3>
-                      <p className={`text-sm ${
-                        achievement.earned 
-                          ? 'text-gray-600 dark:text-gray-300'
-                          : 'text-gray-400 dark:text-gray-500'
-                      }`}>
-                        {achievement.description}
-                      </p>
-                    </div>
-                    {achievement.earned && (
-                      <Award className={`w-6 h-6 text-${achievement.color}-600 dark:text-${achievement.color}-400`} />
-                    )}
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${achievement.progress}%` }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className={`h-2 ${
-                        achievement.earned ? `bg-${achievement.color}-500` : 'bg-gray-400'
-                      }`}
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Contact Info */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 sticky top-4"
-          >
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Contact & Social
-            </h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <MapPin className="w-5 h-5 text-gray-400 mr-3" />
-                <span className="text-base text-gray-600 dark:text-gray-300">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold">
                   {isEditing ? (
                     <input
                       type="text"
-                      value={profileData.location}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
-                      className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-full"
+                      value={profileData.name}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                      className="bg-white/20 backdrop-blur-sm border border-white/30 rounded px-2 py-1 text-white w-full"
                     />
                   ) : (
-                    profileData.location
+                    profileData.name
                   )}
-                </span>
+                </h2>
+                {userProfile?.isPremium && (
+                  <Crown className="w-5 h-5 text-yellow-300" />
+                )}
               </div>
-              
-              <div className="flex items-center">
-                <LinkIcon className="w-5 h-5 text-gray-400 mr-3" />
-                <a 
-                  href={profileData.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-base text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  {profileData.website}
-                </a>
-              </div>
-              
-              <div className="flex items-center">
-                <Github className="w-5 h-5 text-gray-400 mr-3" />
-                <span className="text-base text-gray-600 dark:text-gray-300">
-                  @{profileData.github}
-                </span>
-              </div>
-              
-              <div className="flex items-center">
-                <Twitter className="w-5 h-5 text-gray-400 mr-3" />
-                <span className="text-base text-gray-600 dark:text-gray-300">
-                  @{profileData.twitter}
-                </span>
-              </div>
-              
-              <div className="flex items-center">
-                <Linkedin className="w-5 h-5 text-gray-400 mr-3" />
-                <span className="text-base text-gray-600 dark:text-gray-300">
-                  @{profileData.linkedin}
-                </span>
-              </div>
+              <p className="text-blue-100 text-sm">
+                {userProfile?.email}
+              </p>
             </div>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShare}
-              className="w-full mt-6 bg-white/20 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-white/30 transition-colors"
-            >
-              <Share2 size={20} />
-              Share Profile
-            </motion.button>
-          </motion.div>
+          </div>
 
-          {/* Stats Summary */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
+          {/* Bio */}
+          <div className="mb-4">
+            {isEditing ? (
+              <textarea
+                value={profileData.bio}
+                onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                className="bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white w-full h-20 resize-none text-sm"
+                placeholder="Tell us about yourself..."
+              />
+            ) : (
+              <p className="text-blue-100 text-sm">{profileData.bio}</p>
+            )}
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center">
+              <div className="text-lg font-bold">{stats.total}</div>
+              <div className="text-blue-100 text-xs">Total</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center">
+              <div className="text-lg font-bold">{stats.completed}</div>
+              <div className="text-blue-100 text-xs">Completed</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center">
+              <div className="text-lg font-bold">{completionRate}%</div>
+              <div className="text-blue-100 text-xs">Success</div>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {isEditing && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-4 pt-4 border-t border-white/20"
+              >
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-blue-100 text-xs mb-1">Location</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
+                      <input
+                        type="text"
+                        value={profileData.location}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
+                        className="w-full pl-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-blue-100 text-xs mb-1">Website</label>
+                    <div className="relative">
+                      <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
+                      <input
+                        type="url"
+                        value={profileData.website}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, website: e.target.value }))}
+                        className="w-full pl-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-blue-100 text-xs mb-1">GitHub</label>
+                      <div className="relative">
+                        <Github className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
+                        <input
+                          type="text"
+                          value={profileData.github}
+                          onChange={(e) => setProfileData(prev => ({ ...prev, github: e.target.value }))}
+                          className="w-full pl-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-blue-100 text-xs mb-1">Twitter</label>
+                      <div className="relative">
+                        <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
+                        <input
+                          type="text"
+                          value={profileData.twitter}
+                          onChange={(e) => setProfileData(prev => ({ ...prev, twitter: e.target.value }))}
+                          className="w-full pl-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded px-3 py-2 text-white text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end mt-4 gap-2">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-colors text-white text-sm"
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleSaveProfile}
+                    className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm"
+                  >
+                    Save
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      <div className="p-4 space-y-4">
+        {/* Recent Tasks */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Recent Tasks
+            </h2>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-32"
+                />
+              </div>
+              <select
+                value={selectedFilter}
+                onChange={(e) => setSelectedFilter(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="all">All</option>
+                <option value="todo">To Do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+          
+          {filteredTasks.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-6 text-sm">
+              No tasks found.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <AnimatePresence>
+                {filteredTasks.map((task) => (
+                  <motion.div
+                    key={task.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-sm"
+                  >
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900 dark:text-white text-sm">
+                        {task.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {task.category.replace('-', ' ')} • {task.priority}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      task.status === 'completed' 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
+                        : task.status === 'in-progress'
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    }`}>
+                      {task.status.replace('-', ' ')}
+                    </span>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Stats Section */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4"
+        >
+          <button 
+            onClick={() => setShowStats(!showStats)}
+            className="flex items-center justify-between w-full mb-3"
           >
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Statistics
             </h2>
-            
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-base text-gray-600 dark:text-gray-300">Tasks Completed</span>
-                  <span className="font-semibold text-gray-900 dark:text-white text-lg">{stats.completed}</span>
+            {showStats ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+
+          <AnimatePresence>
+            {showStats && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Tasks Completed</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{stats.completed}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-green-500 h-2 rounded-full"
+                        style={{ width: `${(stats.completed / stats.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">In Progress</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{stats.inProgress}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Success Rate</span>
+                    <span className="font-semibold text-green-600 dark:text-green-400">{completionRate}%</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Account Type</span>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      userProfile?.isPremium 
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    }`}>
+                      {userProfile?.isPremium ? 'Premium' : 'Free'}
+                    </span>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-green-500 h-2 rounded-full"
-                    style={{ width: `${(stats.completed / stats.total) * 100}%` }}
-                  />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Achievements Section */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4"
+        >
+          <button 
+            onClick={() => setShowAchievements(!showAchievements)}
+            className="flex items-center justify-between w-full mb-3"
+          >
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Achievements
+            </h2>
+            {showAchievements ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+
+          <AnimatePresence>
+            {showAchievements && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  {achievements.map((achievement, index) => (
+                    <motion.div
+                      key={achievement.title}
+                      variants={itemVariants}
+                      custom={index}
+                      className={`p-3 rounded-xl border ${
+                        achievement.earned
+                          ? `border-${achievement.color}-200 bg-${achievement.color}-50/50 dark:bg-${achievement.color}-900/20`
+                          : 'border-gray-200 bg-gray-50/50 dark:bg-gray-700/50 dark:border-gray-600'
+                      }`}
+                    >
+                      <div className="flex items-start mb-2">
+                        <achievement.icon 
+                          className={`w-5 h-5 mr-2 ${
+                            achievement.earned 
+                              ? `text-${achievement.color}-600 dark:text-${achievement.color}-400`
+                              : 'text-gray-400'
+                          }`} 
+                        />
+                        <div className="flex-1">
+                          <h3 className={`font-medium text-sm ${
+                            achievement.earned 
+                              ? 'text-gray-900 dark:text-white'
+                              : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                            {achievement.title}
+                          </h3>
+                        </div>
+                        {achievement.earned && (
+                          <Award className={`w-4 h-4 text-${achievement.color}-600 dark:text-${achievement.color}-400`} />
+                        )}
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${achievement.progress}%` }}
+                          transition={{ duration: 1, ease: 'easeOut' }}
+                          className={`h-1.5 ${
+                            achievement.earned ? `bg-${achievement.color}-500` : 'bg-gray-400'
+                          }`}
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-base text-gray-600 dark:text-gray-300">In Progress</span>
-                <span className="font-semibold text-gray-900 dark:text-white text-lg">{stats.inProgress}</span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-base text-gray-600 dark:text-gray-300">Success Rate</span>
-                <span className="font-semibold text-green-600 dark:text-green-400 text-lg">{completionRate}%</span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-base text-gray-600 dark:text-gray-300">Account Type</span>
-                <span className={`px-3 py-1 rounded text-sm font-medium ${
-                  userProfile?.isPremium 
-                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                }`}>
-                  {userProfile?.isPremium ? 'Premium' : 'Free'}
-                </span>
-              </div>
-              {!userProfile?.isPremium && (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
-                >
-                  Upgrade to Premium
-                </motion.button>
-              )}
-            </div>
-          </motion.div>
-        </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Mobile Optimization Notice */}
+        <motion.div 
+          className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg mr-3">
+            <Smartphone size={18} className="text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h4 className="text-blue-800 dark:text-blue-200 font-medium text-sm">Mobile Optimized</h4>
+            <p className="text-blue-600 dark:text-blue-300 text-xs mt-1">
+              Your profile is designed to look great on any device.
+            </p>
+          </div>
+        </motion.div>
       </div>
 
       {/* Share Modal */}
@@ -641,7 +582,7 @@ export const Profile: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg"
+            className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm"
           >
             Profile link copied to clipboard!
           </motion.div>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Edit3,
   Trash2,
@@ -10,7 +10,18 @@ import {
   Star,
   Clock,
   BellRing,
-  Copy
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Target,
+  User,
+  Tag,
+  Zap,
+  CheckCircle,
+  Circle,
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import { Task } from '../../types/task';
 import { useTasks } from '../../hooks/useTasks';
@@ -20,19 +31,26 @@ import toast from 'react-hot-toast';
 interface TaskCardProps {
   task: Task;
   index: number;
+  compact?: boolean;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false }) => {
   const { updateTask, deleteTask } = useTasks();
   const [showMenu, setShowMenu] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   // Helpers
   const formatDate = (d?: string | Date) => {
     if (!d) return '';
     const date = d instanceof Date ? d : new Date(d);
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: task.dueDate && new Date(task.dueDate).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
   };
 
   const getDaysLeft = (d?: string | Date) => {
@@ -58,27 +76,27 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
     return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        return <Zap size={12} className="text-red-500" />;
       case 'high':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+        return <Flag size={12} className="text-orange-500" />;
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+        return <Target size={12} className="text-yellow-500" />;
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return <Circle size={12} className="text-gray-500" />;
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return <CheckCircle size={14} className="text-green-500" />;
       case 'in-progress':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+        return <Clock size={14} className="text-blue-500" />;
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return <Circle size={14} className="text-gray-400" />;
     }
   };
 
@@ -109,16 +127,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      setLoading(true);
-      try {
-        await deleteTask(task.id);
-        toast.success('Task deleted successfully');
-      } catch {
-        toast.error('Failed to delete task');
-      } finally {
-        setLoading(false);
-      }
+    setLoading(true);
+    try {
+      await deleteTask(task.id);
+      toast.success('Task deleted successfully');
+      setShowDeleteConfirm(false);
+    } catch {
+      toast.error('Failed to delete task');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -160,21 +177,30 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
     }
   };
 
+  const toggleExpand = () => {
+    setExpanded(!expanded);
+  };
+
   return (
     <>
       <motion.article
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.05 }}
-        className="group bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-800/80 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 p-4 sm:p-5 transition-shadow hover:shadow-lg relative overflow-hidden w-full"
+        className={`group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 transition-all hover:shadow-md relative overflow-hidden w-full ${
+          task.status === 'completed' ? 'opacity-80' : ''
+        }`}
         aria-labelledby={`task-${task.id}-title`}
         role="article"
       >
-        <div className="absolute -top-6 -right-6 opacity-10 transform rotate-45 text-6xl pointer-events-none select-none">
-          ⭐
-        </div>
+        {/* Favorite indicator */}
+        {task.favorite && (
+          <div className="absolute top-2 right-2 text-yellow-400">
+            <Star size={14} fill="currentColor" />
+          </div>
+        )}
 
-        <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 w-full">
+        <div className="flex items-start gap-3 w-full">
           {/* status toggle */}
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -183,98 +209,129 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
             disabled={loading}
             aria-pressed={task.status === 'completed'}
             title={task.status === 'completed' ? 'Mark as Todo' : 'Mark as Completed'}
-            className={`flex-shrink-0 mt-1 w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-colors ${
+            className={`flex-shrink-0 mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
               task.status === 'completed'
                 ? 'bg-green-500 border-green-500 text-white'
                 : 'border-gray-300 dark:border-gray-600 hover:border-green-500'
             }`}
           >
-            {task.status === 'completed' ? (
-              <CheckSquare size={18} />
-            ) : (
-              <CheckSquare size={18} className="opacity-30" />
-            )}
+            {task.status === 'completed' && <CheckSquare size={12} />}
           </motion.button>
 
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-3">
+            <div className="flex justify-between items-start gap-2">
               <div className="flex-1 min-w-0">
-                <h3
-                  id={`task-${task.id}-title`}
-                  className={`text-base sm:text-lg font-semibold leading-tight break-words ${
-                    task.status === 'completed'
-                      ? 'text-gray-500 dark:text-gray-400 line-through'
-                      : 'text-gray-900 dark:text-white'
-                  }`}
-                >
-                  {task.title}
-                </h3>
-
-                <p className="text-sm mt-1 text-gray-600 dark:text-gray-300 break-words">
-                  {task.description || (
-                    <span className="text-xs text-gray-400 italic">
-                      No description
-                    </span>
-                  )}
-                </p>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3
+                    id={`task-${task.id}-title`}
+                    className={`text-base font-semibold leading-tight break-words ${
+                      task.status === 'completed'
+                        ? 'text-gray-500 dark:text-gray-400 line-through'
+                        : 'text-gray-900 dark:text-white'
+                    }`}
+                  >
+                    {task.title}
+                  </h3>
+                </div>
 
                 {/* badges */}
-                <div className="flex flex-wrap items-center gap-2 mt-3">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      task.status
-                    )}`}
-                  >
-                    {task.status.replace('-', ' ')}
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    {getStatusIcon(task.status)}
+                    <span className="capitalize">{task.status.replace('-', ' ')}</span>
                   </span>
 
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(
-                      task.priority
-                    )}`}
-                  >
-                    <Flag size={12} className="inline mr-1" />
-                    {task.priority} priority
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                    {getPriorityIcon(task.priority)}
+                    <span className="capitalize">{task.priority}</span>
                   </span>
 
                   {task.dueDate && (
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${getUrgencyClass(
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${getUrgencyClass(
                         daysLeft
                       )}`}
                     >
-                      <Calendar size={12} className="inline mr-1" />
-                      {formatDate(task.dueDate)}{' '}
-                      {daysLeft !== null
-                        ? daysLeft < 0
-                          ? `· overdue ${Math.abs(daysLeft)}d`
-                          : `· ${daysLeft}d left`
-                        : ''}
-                    </span>
-                  )}
-
-                  {task.tags?.length > 0 && (
-                    <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 dark:text-gray-300 break-words">
-                      {task.tags.slice(0, 3).join(', ')}
+                      <Calendar size={12} />
+                      {formatDate(task.dueDate)}
+                      {daysLeft !== null && daysLeft < 0 && (
+                        <span> • {Math.abs(daysLeft)}d ago</span>
+                      )}
+                      {daysLeft !== null && daysLeft >= 0 && (
+                        <span> • {daysLeft}d left</span>
+                      )}
                     </span>
                   )}
                 </div>
 
+                {/* Description with expand/collapse */}
+                {task.description && (
+                  <div className="mb-2">
+                    <button 
+                      onClick={toggleExpand}
+                      className="flex items-center text-sm text-gray-600 dark:text-gray-400"
+                    >
+                      {expanded ? (
+                        <>
+                          <ChevronUp size={14} className="mr-1" />
+                          Hide details
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={14} className="mr-1" />
+                          Show details
+                        </>
+                      )}
+                    </button>
+                    
+                    <AnimatePresence>
+                      {expanded && (
+                        <motion.p 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="text-sm mt-1 text-gray-600 dark:text-gray-300 break-words whitespace-pre-line"
+                        >
+                          {task.description}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                {/* tags */}
+                {task.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {task.tags.slice(0, 3).map((tag, i) => (
+                      <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                        <Tag size={10} />
+                        {tag}
+                      </span>
+                    ))}
+                    {task.tags.length > 3 && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        +{task.tags.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {/* subtasks progress */}
                 {subtaskProgress !== null && (
-                  <div className="mt-3">
+                  <div className="mt-2">
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="text-gray-600 dark:text-gray-300">
-                        Subtasks
+                        Subtasks progress
                       </span>
                       <span className="text-gray-500 dark:text-gray-400">
                         {subtaskProgress}%
                       </span>
                     </div>
-                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-2 rounded-full transition-all bg-green-500"
-                        style={{ width: `${subtaskProgress}%` }}
+                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${subtaskProgress}%` }}
+                        className="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
                       />
                     </div>
                   </div>
@@ -282,124 +339,189 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
               </div>
 
               {/* right controls */}
-              <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={toggleFavorite}
-                    disabled={loading}
-                    title={task.favorite ? 'Unfavorite' : 'Mark favorite'}
-                    className={`p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                      task.favorite ? 'text-yellow-500' : 'text-gray-400'
-                    }`}
-                    aria-label="toggle favorite"
-                  >
-                    <Star size={16} />
-                  </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  onClick={toggleFavorite}
+                  disabled={loading}
+                  title={task.favorite ? 'Unfavorite' : 'Mark favorite'}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    task.favorite 
+                      ? 'text-yellow-500 bg-yellow-100 dark:bg-yellow-900/30' 
+                      : 'text-gray-400 hover:text-yellow-500 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  aria-label="toggle favorite"
+                >
+                  <Star size={16} fill={task.favorite ? "currentColor" : "none"} />
+                </button>
 
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    onClick={() => setShowMenu((s) => !s)}
-                    className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500"
-                    aria-haspopup="true"
-                    aria-expanded={showMenu}
-                  >
-                    <MoreVertical size={16} />
-                  </motion.button>
-                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  onClick={() => setShowMenu((s) => !s)}
+                  className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-haspopup="true"
+                  aria-expanded={showMenu}
+                >
+                  <MoreVertical size={16} />
+                </motion.button>
+              </div>
+            </div>
 
+            {/* Additional info row */}
+            <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-2">
                 {task.assignee && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Assigned to{' '}
-                    <span className="font-medium text-gray-700 dark:text-gray-200">
-                      {task.assignee.name}
-                    </span>
-                  </div>
+                  <span className="inline-flex items-center gap-1">
+                    <User size={12} />
+                    {task.assignee.name}
+                  </span>
                 )}
-
+                
                 {task.estimate && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Est: {task.estimate}h
-                  </div>
+                  <span className="inline-flex items-center gap-1">
+                    <Clock size={12} />
+                    {task.estimate}h
+                  </span>
                 )}
+                
+                {task.category && (
+                  <span className="inline-flex items-center gap-1 capitalize">
+                    <Sparkles size={12} />
+                    {task.category.replace('-', ' ')}
+                  </span>
+                )}
+              </div>
+              
+              <div className="text-xs">
+                {new Date(task.createdAt).toLocaleDateString()}
               </div>
             </div>
           </div>
         </div>
 
         {/* menu */}
-        {showMenu && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -6 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="absolute right-3 top-12 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-40 sm:w-44 overflow-hidden"
-          >
-            <button
-              onClick={() => {
-                setShowEditForm(true);
-                setShowMenu(false);
-              }}
-              className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
+        <AnimatePresence>
+          {showMenu && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -6 }}
+              className="absolute right-3 top-12 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-44 overflow-hidden"
             >
-              <Edit3 size={14} /> Edit
-            </button>
+              <button
+                onClick={() => {
+                  setShowEditForm(true);
+                  setShowMenu(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Edit3 size={16} /> Edit Task
+              </button>
 
-            <button
-              onClick={() => {
-                copyTaskToClipboard();
-                setShowMenu(false);
-              }}
-              className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <Copy size={14} /> Copy JSON
-            </button>
+              <button
+                onClick={() => {
+                  copyTaskToClipboard();
+                  setShowMenu(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Copy size={16} /> Copy JSON
+              </button>
 
-            <button
-              onClick={() => {
-                snoozeOneDay();
-                setShowMenu(false);
-              }}
-              className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <Clock size={14} /> Snooze +1 day
-            </button>
+              <button
+                onClick={() => {
+                  snoozeOneDay();
+                  setShowMenu(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Clock size={16} /> Snooze 1 Day
+              </button>
 
-            <button
-              onClick={() => {
-                setShowMenu(false);
-                navigator.vibrate?.(50);
-                setTimeout(() => {
-                  if (task.dueDate) {
-                    toast(`Reminder set for ${formatDate(task.dueDate)}`);
-                  }
-                }, 150);
-              }}
-              className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <BellRing size={14} /> Quick reminder
-            </button>
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  navigator.vibrate?.(50);
+                  setTimeout(() => {
+                    if (task.dueDate) {
+                      toast(`Reminder set for ${formatDate(task.dueDate)}`);
+                    }
+                  }, 150);
+                }}
+                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <BellRing size={16} /> Set Reminder
+              </button>
 
-            <button
-              onClick={() => {
-                handleDelete();
-                setShowMenu(false);
-              }}
-              disabled={loading}
-              className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
-            >
-              <Trash2 size={14} /> Delete
-            </button>
-          </motion.div>
-        )}
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  setShowDeleteConfirm(true);
+                }}
+                disabled={loading}
+                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 transition-colors"
+              >
+                <Trash2 size={16} /> Delete Task
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* click outside */}
         {showMenu && (
           <button
             aria-hidden
             onClick={() => setShowMenu(false)}
-            className="fixed inset-0 z-10 bg-transparent"
+            className="fixed inset-0 z-10 bg-transparent cursor-default"
           />
         )}
       </motion.article>
+
+      {/* Beautiful Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-xl"
+            >
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="text-red-500" size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Delete Task?
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Are you sure you want to delete "{task.title}"? This action cannot be undone.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={loading}
+                  className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={loading}
+                  className="flex-1 py-3 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center"
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    'Delete Task'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <TaskEditForm
         task={task}

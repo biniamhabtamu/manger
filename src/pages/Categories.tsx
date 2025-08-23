@@ -20,7 +20,12 @@ import {
   Trash2,
   Download,
   Grid,
-  List
+  List,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
+  Smartphone,
+  Sparkles
 } from 'lucide-react';
 import { useTasks } from '../hooks/useTasks';
 import { TaskForm } from '../components/tasks/TaskForm';
@@ -106,6 +111,7 @@ export const Categories: React.FC = () => {
   const [pagination, setPagination] = useState({ page: 1, perPage: 10 });
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -180,12 +186,15 @@ export const Categories: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"
-        ></motion.div>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            className="rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"
+          ></motion.div>
+          <p className="text-gray-600 dark:text-gray-300">Loading your tasks...</p>
+        </div>
       </div>
     );
   }
@@ -193,22 +202,21 @@ export const Categories: React.FC = () => {
   // --- Show all categories overview ---
   if (!currentCategory) {
     return (
-      <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 min-h-screen">
+      <div className="p-4 space-y-6 bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen pb-20">
         <motion.div
-          initial={{ opacity: 0, y: -30 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8 text-center"
+          className="text-center mb-6"
         >
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Task Categories
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
-            Organize your tasks by category for better focus and productivity. Track progress and stay motivated.
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Organize your tasks by category for better focus
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4">
           {Object.entries(categoryConfig).map(([key, config], index) => {
             const categoryTasks = tasks.filter(t => t.category === key);
             const completedTasks = categoryTasks.filter(t => t.status === 'completed');
@@ -222,48 +230,48 @@ export const Categories: React.FC = () => {
                 animate="visible"
                 variants={itemVariants}
                 transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.05, boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer transform transition-all duration-300"
+                whileHover={{ y: -5 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer"
               >
                 <Link to={`/tasks/${key}`} className="block h-full">
-                  <div className={`bg-gradient-to-br ${config.gradient} p-6 text-white relative overflow-hidden`}>
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                    <div className="flex items-center justify-between mb-4">
-                      <config.icon size={40} className="text-white/90" />
-                      <span className="text-3xl font-bold tabular-nums">{categoryTasks.length}</span>
+                  <div className={`bg-gradient-to-br ${config.gradient} p-5 text-white relative overflow-hidden`}>
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+                    <div className="flex items-center justify-between mb-3">
+                      <config.icon size={32} className="text-white/90" />
+                      <span className="text-2xl font-bold">{categoryTasks.length}</span>
                     </div>
-                    <h3 className="text-2xl font-semibold mb-2">{config.title}</h3>
-                    <p className="text-white/80 text-sm leading-relaxed">{config.description}</p>
+                    <h3 className="text-xl font-semibold mb-1">{config.title}</h3>
+                    <p className="text-white/80 text-sm">{config.description}</p>
                   </div>
 
-                  <div className="p-6">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Completion Progress</span>
+                  <div className="p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Progress</span>
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">{completionRate}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden shadow-inner">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${completionRate}%` }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className={`bg-gradient-to-r ${config.gradient} h-3 rounded-full`}
+                        className={`bg-gradient-to-r ${config.gradient} h-2 rounded-full`}
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 mt-6 text-center text-gray-700 dark:text-gray-300">
+                    <div className="grid grid-cols-3 gap-2 mt-4 text-center text-gray-700 dark:text-gray-300">
                       <div>
-                        <div className="text-xl font-semibold">{completedTasks.length}</div>
-                        <div className="text-xs font-medium uppercase tracking-wide">Completed</div>
+                        <div className="text-lg font-semibold">{completedTasks.length}</div>
+                        <div className="text-xs">Done</div>
                       </div>
                       <div>
-                        <div className="text-xl font-semibold">
+                        <div className="text-lg font-semibold">
                           {categoryTasks.filter(t => t.status === 'in-progress').length}
                         </div>
-                        <div className="text-xs font-medium uppercase tracking-wide">In Progress</div>
+                        <div className="text-xs">In Progress</div>
                       </div>
                       <div>
-                        <div className="text-xl font-semibold">{categoryTasks.filter(t => t.status === 'todo').length}</div>
-                        <div className="text-xs font-medium uppercase tracking-wide">To Do</div>
+                        <div className="text-lg font-semibold">{categoryTasks.filter(t => t.status === 'todo').length}</div>
+                        <div className="text-xs">To Do</div>
                       </div>
                     </div>
                   </div>
@@ -272,302 +280,341 @@ export const Categories: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Mobile Optimization Notice */}
+        <motion.div 
+          className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg mr-3">
+            <Smartphone size={18} className="text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h4 className="text-blue-800 dark:text-blue-200 font-medium text-sm">Mobile Optimized</h4>
+            <p className="text-blue-600 dark:text-blue-300 text-xs mt-1">
+              Tap on any category to view and manage your tasks.
+            </p>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   // --- Show specific category page ---
   return (
-    <div className="p-2 sm:p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-4 md:space-y-6 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 pb-20">
       {/* Category Header */}
       <motion.div
-        initial={{ opacity: 0, y: -30 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={`bg-gradient-to-br ${config!.gradient} rounded-2xl p-4 md:p-6 lg:p-8 text-white flex flex-col justify-between items-center gap-4 md:gap-6 shadow-xl relative overflow-hidden`}
+        className={`bg-gradient-to-br ${config!.gradient} rounded-b-3xl p-5 text-white shadow-lg relative overflow-hidden`}
       >
-        <div className="absolute top-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mt-24 blur-xl"></div>
-        <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-5 flex-1 min-w-0 w-full">
-          <config.icon size={32} md:size={48} lg:size={64} className="text-white/90" />
-          <div className="truncate text-center md:text-left">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold truncate">{config.title}</h1>
-            <p className="mt-1 md:mt-2 text-white/80 text-sm md:text-base max-w-lg">{config.description}</p>
-          </div>
-        </div>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowTaskForm(true)}
-          className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 text-white shadow-lg shadow-black/20 w-full md:w-auto justify-center"
-          aria-label={`Add new task to ${config.title}`}
-        >
-          <Plus size={16} md:size={20} />
-          <span className="text-sm md:text-base">Add Task</span>
-        </motion.button>
-      </motion.div>
-
-      {/* Category Stats */}
-      {categoryStats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
-          <motion.div 
-            className="bg-white dark:bg-gray-800 rounded-2xl p-3 md:p-5 text-center shadow-md border border-gray-100 dark:border-gray-700"
-            whileHover={{ scale: 1.05 }}
-          >
-            <Inbox size={24} md:size={32} className="mx-auto mb-2 md:mb-3 text-blue-500" />
-            <div className="text-xl md:text-3xl font-bold tabular-nums">{categoryStats.total}</div>
-            <div className="uppercase text-xs tracking-wide text-gray-600 dark:text-gray-400">Total Tasks</div>
-          </motion.div>
-          <motion.div 
-            className="bg-white dark:bg-gray-800 rounded-2xl p-3 md:p-5 text-center shadow-md border border-gray-100 dark:border-gray-700"
-            whileHover={{ scale: 1.05 }}
-          >
-            <CheckSquare size={24} md:size={32} className="mx-auto mb-2 md:mb-3 text-green-500" />
-            <div className="text-xl md:text-3xl font-bold tabular-nums">{categoryStats.completed}</div>
-            <div className="uppercase text-xs tracking-wide text-gray-600 dark:text-gray-400">Completed</div>
-          </motion.div>
-          <motion.div 
-            className="bg-white dark:bg-gray-800 rounded-2xl p-3 md:p-5 text-center shadow-md border border-gray-100 dark:border-gray-700"
-            whileHover={{ scale: 1.05 }}
-          >
-            <Clock size={24} md:size={32} className="mx-auto mb-2 md:mb-3 text-yellow-500" />
-            <div className="text-xl md:text-3xl font-bold tabular-nums">{categoryStats.inProgress}</div>
-            <div className="uppercase text-xs tracking-wide text-gray-600 dark:text-gray-400">In Progress</div>
-          </motion.div>
-          <motion.div 
-            className="bg-white dark:bg-gray-800 rounded-2xl p-3 md:p-5 text-center shadow-md border border-gray-100 dark:border-gray-700"
-            whileHover={{ scale: 1.05 }}
-          >
-            <AlertTriangle size={24} md:size={32} className="mx-auto mb-2 md:mb-3 text-red-500" />
-            <div className="text-xl md:text-3xl font-bold tabular-nums">{categoryStats.overdue}</div>
-            <div className="uppercase text-xs tracking-wide text-gray-600 dark:text-gray-400">Overdue</div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Controls */}
-      <div className="flex flex-col gap-2 sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md py-2 px-2 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-          {statusFilters.map(filter => (
+        <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mt-16 blur-xl"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <config.icon size={28} className="text-white/90 mr-3" />
+              <div>
+                <h1 className="text-2xl font-bold">{config.title}</h1>
+                <p className="text-white/80 text-sm">{config.description}</p>
+              </div>
+            </div>
             <motion.button
-              key={filter.value}
-              onClick={() => setSelectedStatus(filter.value)}
-              className={`px-2 py-1 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors flex items-center space-x-1 md:space-x-2 ${
-                selectedStatus === filter.value
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => setShowTaskForm(true)}
+              className="bg-white/20 backdrop-blur-md p-3 rounded-xl font-semibold transition-colors flex items-center justify-center text-white shadow-lg"
+              aria-label={`Add new task to ${config.title}`}
             >
-              {filter.icon}
-              <span>{filter.label}</span>
-            </motion.button>
-          ))}
-        </div>
-
-        <div className="flex gap-2 justify-center md:justify-end">
-          <motion.button
-            onClick={() => setViewMode('list')}
-            className={`p-1 md:p-2 rounded-lg ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}
-            whileHover={{ scale: 1.05 }}
-          >
-            <List size={16} md:size={20} />
-          </motion.button>
-          <motion.button
-            onClick={() => setViewMode('grid')}
-            className={`p-1 md:p-2 rounded-lg ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}
-            whileHover={{ scale: 1.05 }}
-          >
-            <Grid size={16} md:size={20} />
-          </motion.button>
-          <motion.button
-            onClick={() => setViewMode('kanban')}
-            className={`p-1 md:p-2 rounded-lg ${viewMode === 'kanban' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}
-            whileHover={{ scale: 1.05 }}
-          >
-            <Grid size={16} md:size={20} />
-          </motion.button>
-        </div>
-
-        <div className="relative w-full md:w-auto">
-          <Filter className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition appearance-none w-full md:min-w-[200px]"
-          >
-            {sortOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Search input */}
-      <div className="relative max-w-md mx-auto">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
-        <input
-          type="search"
-          placeholder="Search tasks..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-          aria-label="Search tasks"
-          spellCheck={false}
-          autoComplete="off"
-        />
-      </div>
-
-      {/* Bulk Actions */}
-      {selectedTasks.size > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-yellow-100 dark:bg-yellow-900/30 p-4 rounded-lg flex flex-col md:flex-row items-center justify-between sticky top-20 z-10 gap-4"
-        >
-          <span className="font-medium">{selectedTasks.size} selected</span>
-          <div className="flex gap-2 flex-wrap justify-center">
-            <motion.button
-              onClick={() => {
-                selectedTasks.forEach(id => updateTask({ ...tasks.find(t => t.id === id)!, status: 'completed' }));
-                setSelectedTasks(new Set());
-              }}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center gap-2 hover:bg-green-600"
-              whileHover={{ scale: 1.05 }}
-            >
-              <CheckSquare size={16} />
-              Complete
-            </motion.button>
-            <motion.button
-              onClick={() => {
-                selectedTasks.forEach(id => deleteTask(id));
-                setSelectedTasks(new Set());
-              }}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg flex items-center gap-2 hover:bg-red-600"
-              whileHover={{ scale: 1.05 }}
-            >
-              <Trash2 size={16} />
-              Delete
+              <Plus size={20} />
             </motion.button>
           </div>
-        </motion.div>
-      )}
 
-      {/* Tasks List */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className={`space-y-4 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : viewMode === 'kanban' ? 'flex flex-col md:flex-row gap-4 overflow-x-auto pb-4' : ''}`}
-      >
-        <AnimatePresence>
-          {viewMode === 'kanban' ? (
-            Object.entries(kanbanColumns).map(([status, columnTasks]) => (
-              <div key={status} className="bg-gray-100 dark:bg-gray-700 p-4 rounded-2xl min-w-[250px] flex-1">
-                <h3 className="text-lg font-semibold mb-4">{status.toUpperCase()}</h3>
-                <div className="space-y-4 min-h-[200px]" onDrop={(e) => {
-                  e.preventDefault();
-                  const id = e.dataTransfer.getData('text');
-                  const task = filteredTasks.find(t => t.id === id);
-                  if (task && task.status !== status) {
-                    updateTask({ ...task, status: status as TaskStatus });
-                  }
-                }} onDragOver={e => e.preventDefault()}>
-                  {columnTasks.map((task, index) => (
-                    <motion.div 
-                      key={task.id} 
-                      draggable 
-                      onDragStart={e => e.dataTransfer.setData('text', task.id)}
-                      variants={itemVariants}
-                      className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow cursor-move"
-                    >
-                      <TaskCard task={task} index={index} compact />
-                    </motion.div>
-                  ))}
-                </div>
+          {/* Category Stats */}
+          {categoryStats && (
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl text-center">
+                <div className="text-xl font-bold">{categoryStats.total}</div>
+                <div className="text-xs text-white/80">Total</div>
               </div>
-            ))
-          ) : filteredTasks.length === 0 ? (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="text-center py-16 text-gray-500 dark:text-gray-400 space-y-4 max-w-lg mx-auto"
-            >
-              <Inbox size={64} className="mx-auto mb-2 opacity-50" />
-              <div className="text-2xl font-semibold">
-                No tasks found
+              <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl text-center">
+                <div className="text-xl font-bold">{categoryStats.completed}</div>
+                <div className="text-xs text-white/80">Completed</div>
               </div>
-              <p className="text-base">
-                {tasks.filter(t => t.category === currentCategory).length === 0
-                  ? `Create your first ${config!.title.toLowerCase()} task to get started!`
-                  : 'Try adjusting your search or filters.'}
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowTaskForm(true)}
-                className={`bg-gradient-to-r ${config!.gradient} text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 mx-auto shadow-md`}
-              >
-                <Plus size={20} />
-                <span>Add Your First Task</span>
-              </motion.button>
-            </motion.div>
-          ) : (
-            paginatedTasks.map((task, index) => (
-              <motion.div 
-                key={task.id} 
-                variants={itemVariants} 
-                layout 
-                whileHover={{ scale: 1.02, boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}
-                transition={{ duration: 0.3 }}
-                className={viewMode === 'grid' ? 'col-span-1' : ''}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedTasks.has(task.id)}
-                  onChange={() => {
-                    const newSet = new Set(selectedTasks);
-                    if (newSet.has(task.id)) newSet.delete(task.id);
-                    else newSet.add(task.id);
-                    setSelectedTasks(newSet);
-                  }}
-                  className="absolute top-4 left-4 z-10"
-                />
-                <TaskCard task={task} index={index} />
-              </motion.div>
-            ))
+              <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl text-center">
+                <div className="text-xl font-bold">{categoryStats.inProgress}</div>
+                <div className="text-xs text-white/80">In Progress</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl text-center">
+                <div className="text-xl font-bold">{categoryStats.overdue}</div>
+                <div className="text-xs text-white/80">Overdue</div>
+              </div>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
       </motion.div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 mt-6 text-gray-600 dark:text-gray-400">
-          <button
-            onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-            disabled={pagination.page === 1}
-            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span>Page {pagination.page} of {totalPages}</span>
-          <button
-            onClick={() => setPagination(prev => ({ ...prev, page: Math.min(totalPages, prev.page + 1) }))}
-            disabled={pagination.page === totalPages}
-            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50"
-          >
-            Next
-          </button>
+      <div className="p-4 space-y-4">
+        {/* Search input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
+          <input
+            type="search"
+            placeholder="Search tasks..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            aria-label="Search tasks"
+            spellCheck={false}
+            autoComplete="off"
+          />
         </div>
-      )}
 
-      {/* Export Button */}
-     
+        {/* Controls */}
+        <div className="flex flex-col gap-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-3 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-gray-700 dark:text-gray-300">Filters</h3>
+            <motion.button
+              onClick={() => setShowFilters(!showFilters)}
+              className="p-1 rounded-lg bg-gray-100 dark:bg-gray-700"
+              whileTap={{ scale: 0.95 }}
+            >
+              {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </motion.button>
+          </div>
+
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {statusFilters.map(filter => (
+                    <motion.button
+                      key={filter.value}
+                      onClick={() => setSelectedStatus(filter.value)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 ${
+                        selectedStatus === filter.value
+                          ? 'bg-blue-500 text-white shadow-md'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      }`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {filter.icon}
+                      <span>{filter.label}</span>
+                    </motion.button>
+                  ))}
+                </div>
+
+                <div className="mt-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort by</span>
+                    <motion.button
+                      onClick={() => setShowSort(!showSort)}
+                      className="p-1 rounded-lg bg-gray-100 dark:bg-gray-700"
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {showSort ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </motion.button>
+                  </div>
+
+                  <AnimatePresence>
+                    {showSort && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden space-y-2"
+                      >
+                        {sortOptions.map(option => (
+                          <motion.button
+                            key={option.value}
+                            onClick={() => setSortBy(option.value)}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center space-x-2 ${
+                              sortBy === option.value
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            }`}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            {option.icon}
+                            <span>{option.label}</span>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="mt-3">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">View</span>
+                  <div className="flex gap-2">
+                    <motion.button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <List size={18} />
+                    </motion.button>
+                    <motion.button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <Grid size={18} />
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Bulk Actions */}
+        {selectedTasks.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-xl flex flex-col md:flex-row items-center justify-between gap-2"
+          >
+            <span className="font-medium text-sm">{selectedTasks.size} selected</span>
+            <div className="flex gap-2">
+              <motion.button
+                onClick={() => {
+                  selectedTasks.forEach(id => updateTask({ ...tasks.find(t => t.id === id)!, status: 'completed' }));
+                  setSelectedTasks(new Set());
+                }}
+                className="px-3 py-1 bg-green-500 text-white rounded-lg flex items-center gap-1 text-sm"
+                whileHover={{ scale: 1.05 }}
+              >
+                <CheckSquare size={14} />
+                Complete
+              </motion.button>
+              <motion.button
+                onClick={() => {
+                  selectedTasks.forEach(id => deleteTask(id));
+                  setSelectedTasks(new Set());
+                }}
+                className="px-3 py-1 bg-red-500 text-white rounded-lg flex items-center gap-1 text-sm"
+                whileHover={{ scale: 1.05 }}
+              >
+                <Trash2 size={14} />
+                Delete
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Tasks List */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className={`space-y-3 ${viewMode === 'grid' ? 'grid grid-cols-1 gap-3' : ''}`}
+        >
+          <AnimatePresence>
+            {filteredTasks.length === 0 ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="text-center py-10 text-gray-500 dark:text-gray-400 space-y-4"
+              >
+                <Inbox size={48} className="mx-auto mb-2 opacity-50" />
+                <div className="text-lg font-semibold">
+                  No tasks found
+                </div>
+                <p className="text-sm">
+                  {tasks.filter(t => t.category === currentCategory).length === 0
+                    ? `Create your first ${config!.title.toLowerCase()} task to get started!`
+                    : 'Try adjusting your search or filters.'}
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowTaskForm(true)}
+                  className={`bg-gradient-to-r ${config!.gradient} text-white px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 mx-auto text-sm`}
+                >
+                  <Plus size={16} />
+                  <span>Add Your First Task</span>
+                </motion.button>
+              </motion.div>
+            ) : (
+              paginatedTasks.map((task, index) => (
+                <motion.div 
+                  key={task.id} 
+                  variants={itemVariants} 
+                  layout 
+                  whileHover={{ y: -2 }}
+                  transition={{ duration: 0.2 }}
+                  className={viewMode === 'grid' ? 'col-span-1' : ''}
+                >
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={selectedTasks.has(task.id)}
+                      onChange={() => {
+                        const newSet = new Set(selectedTasks);
+                        if (newSet.has(task.id)) newSet.delete(task.id);
+                        else newSet.add(task.id);
+                        setSelectedTasks(newSet);
+                      }}
+                      className="absolute top-3 left-3 z-10 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <TaskCard task={task} index={index} compact />
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-3 mt-4 text-gray-600 dark:text-gray-400 text-sm">
+            <button
+              onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+              disabled={pagination.page === 1}
+              className="px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span>Page {pagination.page} of {totalPages}</span>
+            <button
+              onClick={() => setPagination(prev => ({ ...prev, page: Math.min(totalPages, prev.page + 1) }))}
+              disabled={pagination.page === totalPages}
+              className="px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
+        {/* Mobile Optimization Notice */}
+        <motion.div 
+          className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg mr-3">
+            <Sparkles size={18} className="text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h4 className="text-blue-800 dark:text-blue-200 font-medium text-sm">Mobile Tips</h4>
+            <p className="text-blue-600 dark:text-blue-300 text-xs mt-1">
+              Tap the + button to quickly add tasks. Swipe on tasks to mark as complete.
+            </p>
+          </div>
+        </motion.div>
+      </div>
 
       {/* Floating Add Button on Mobile */}
       {isMobile && (
@@ -575,7 +622,7 @@ export const Categories: React.FC = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setShowTaskForm(true)}
-          className="fixed bottom-20 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+          className="fixed bottom-20 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 transition-colors z-10"
         >
           <Plus size={24} />
         </motion.button>
