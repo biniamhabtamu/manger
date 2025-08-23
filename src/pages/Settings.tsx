@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, 
@@ -23,12 +23,15 @@ import {
   CreditCard,
   Palette as ThemeIcon,
   Globe as Language,
-  Accessibility
+  Accessibility,
+  ChevronLeft,
+  Menu,
+  X,
+  Crown
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import toast from 'react-hot-toast';
-import { BottomBar } from '../components/layout/BottomBar';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -48,8 +51,23 @@ export const Settings: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Profile settings
   const [profileData, setProfileData] = useState({
     name: userProfile?.name || '',
@@ -91,7 +109,7 @@ export const Settings: React.FC = () => {
     highContrast: false,
   });
 
-  // Billing settings (new)
+  // Billing settings
   const [billing, setBilling] = useState({
     plan: 'free',
     cardLast4: '4242',
@@ -101,7 +119,7 @@ export const Settings: React.FC = () => {
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'privacy', label: 'Security & Privacy', icon: Shield },
+    { id: 'privacy', label: 'Security', icon: Shield },
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'billing', label: 'Billing', icon: CreditCard },
     { id: 'data', label: 'Data', icon: Download },
@@ -110,7 +128,6 @@ export const Settings: React.FC = () => {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success('Profile updated successfully!');
     } catch (error) {
@@ -123,7 +140,6 @@ export const Settings: React.FC = () => {
   const handleExportData = async () => {
     setLoading(true);
     try {
-      // Simulate data export
       await new Promise(resolve => setTimeout(resolve, 2000));
       toast.success('Data export started! You\'ll receive an email when ready.');
     } catch (error) {
@@ -137,7 +153,6 @@ export const Settings: React.FC = () => {
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       setLoading(true);
       try {
-        // Simulate account deletion
         await new Promise(resolve => setTimeout(resolve, 2000));
         toast.success('Account deletion initiated. You\'ll receive a confirmation email.');
       } catch (error) {
@@ -155,7 +170,6 @@ export const Settings: React.FC = () => {
     }
     setLoading(true);
     try {
-      // Simulate password change
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success('Password changed successfully!');
       setPrivacy(prev => ({ ...prev, password: '', confirmPassword: '' }));
@@ -169,7 +183,6 @@ export const Settings: React.FC = () => {
   const handleToggle2FA = async () => {
     setLoading(true);
     try {
-      // Simulate 2FA toggle
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success(`Two-factor authentication ${privacy.twoFactor ? 'disabled' : 'enabled'}!`);
       setPrivacy(prev => ({ ...prev, twoFactor: !prev.twoFactor }));
@@ -198,7 +211,6 @@ export const Settings: React.FC = () => {
   const handleUpgradePlan = async () => {
     setLoading(true);
     try {
-      // Simulate plan upgrade
       await new Promise(resolve => setTimeout(resolve, 1500));
       setBilling(prev => ({ ...prev, plan: 'premium' }));
       toast.success('Plan upgraded to Premium!');
@@ -209,43 +221,55 @@ export const Settings: React.FC = () => {
     }
   };
 
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
         return (
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row gap-6">
-              <div className="relative group">
-                <motion.div 
-                  className="w-32 h-32 rounded-full overflow-hidden shadow-lg cursor-pointer"
-                  whileHover={{ scale: 1.05 }}
+              <div className="flex flex-col items-center">
+                <div className="relative group">
+                  <motion.div 
+                    className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden shadow-lg cursor-pointer"
+                    whileHover={{ scale: 1.05 }}
+                    onClick={handleAvatarClick}
+                  >
+                    {profileData.avatar ? (
+                      <img 
+                        src={URL.createObjectURL(profileData.avatar)} 
+                        alt="Avatar" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl md:text-4xl font-bold">
+                        {profileData.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </motion.div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleAvatarChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <motion.div 
+                    className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                    initial={false}
+                  >
+                    <Upload className="text-white" size={20} />
+                  </motion.div>
+                </div>
+                <button 
                   onClick={handleAvatarClick}
+                  className="mt-3 text-sm text-blue-600 dark:text-blue-400 font-medium"
                 >
-                  {profileData.avatar ? (
-                    <img 
-                      src={URL.createObjectURL(profileData.avatar)} 
-                      alt="Avatar" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold">
-                      {profileData.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </motion.div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleAvatarChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <motion.div 
-                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                  initial={false}
-                >
-                  <Upload className="text-white" size={24} />
-                </motion.div>
+                  Change Photo
+                </button>
               </div>
               
               <div className="flex-1 space-y-4">
@@ -257,7 +281,7 @@ export const Settings: React.FC = () => {
                     type="text"
                     value={profileData.name}
                     onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
                 
@@ -269,7 +293,7 @@ export const Settings: React.FC = () => {
                     type="email"
                     value={profileData.email}
                     onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
                 
@@ -281,7 +305,7 @@ export const Settings: React.FC = () => {
                     type="tel"
                     value={profileData.phone}
                     onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -294,8 +318,8 @@ export const Settings: React.FC = () => {
               <textarea
                 value={profileData.bio}
                 onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Tell us about yourself..."
               />
             </div>
@@ -308,7 +332,7 @@ export const Settings: React.FC = () => {
                 <select
                   value={profileData.language}
                   onChange={(e) => setProfileData(prev => ({ ...prev, language: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="en">English</option>
                   <option value="es">Español</option>
@@ -324,7 +348,7 @@ export const Settings: React.FC = () => {
                 <select
                   value={profileData.timezone}
                   onChange={(e) => setProfileData(prev => ({ ...prev, timezone: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="UTC">UTC</option>
                   <option value="PST">PST</option>
@@ -339,7 +363,7 @@ export const Settings: React.FC = () => {
               whileTap={{ scale: 0.98 }}
               onClick={handleSaveProfile}
               disabled={loading}
-              className="mt-4 flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+              className="mt-4 flex items-center justify-center w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
             >
               <Save className="w-5 h-5 mr-2" />
               {loading ? 'Saving...' : 'Save Changes'}
@@ -357,7 +381,7 @@ export const Settings: React.FC = () => {
                   Email Notifications
                 </h3>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Task Reminders</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -370,7 +394,7 @@ export const Settings: React.FC = () => {
                     </label>
                   </div>
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Weekly Reports</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -383,7 +407,7 @@ export const Settings: React.FC = () => {
                     </label>
                   </div>
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Marketing Emails</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -404,7 +428,7 @@ export const Settings: React.FC = () => {
                   Push Notifications
                 </h3>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Enable Push</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -417,7 +441,7 @@ export const Settings: React.FC = () => {
                     </label>
                   </div>
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Sound Alerts</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -430,7 +454,7 @@ export const Settings: React.FC = () => {
                     </label>
                   </div>
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Vibration</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -449,7 +473,7 @@ export const Settings: React.FC = () => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+              className="flex items-center justify-center w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md"
             >
               <Save className="w-5 h-5 mr-2" />
               Save Notification Settings
@@ -467,7 +491,7 @@ export const Settings: React.FC = () => {
               </h3>
               
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       Two-Factor Authentication
@@ -488,7 +512,7 @@ export const Settings: React.FC = () => {
                   </label>
                 </div>
                 
-                <div>
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Change Password
                   </label>
@@ -500,7 +524,7 @@ export const Settings: React.FC = () => {
                         value={privacy.password}
                         onChange={(e) => setPrivacy(prev => ({ ...prev, password: e.target.value }))}
                         placeholder="New password"
-                        className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                       <button
                         type="button"
@@ -516,7 +540,7 @@ export const Settings: React.FC = () => {
                       value={privacy.confirmPassword}
                       onChange={(e) => setPrivacy(prev => ({ ...prev, confirmPassword: e.target.value }))}
                       placeholder="Confirm new password"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                     
                     <motion.button
@@ -524,7 +548,7 @@ export const Settings: React.FC = () => {
                       whileTap={{ scale: 0.98 }}
                       onClick={handleChangePassword}
                       disabled={loading || !privacy.password || privacy.password !== privacy.confirmPassword}
-                      className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <Key className="w-4 h-4 mr-2" />
                       {loading ? 'Changing...' : 'Change Password'}
@@ -541,14 +565,14 @@ export const Settings: React.FC = () => {
               </h3>
               
               <div className="space-y-6">
-                <div>
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Profile Visibility
                   </label>
                   <select
                     value={privacy.profileVisibility}
                     onChange={(e) => setPrivacy(prev => ({ ...prev, profileVisibility: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="private">Private</option>
                     <option value="public">Public</option>
@@ -556,7 +580,7 @@ export const Settings: React.FC = () => {
                   </select>
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       Data Sharing
@@ -576,7 +600,7 @@ export const Settings: React.FC = () => {
                   </label>
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       Analytics Tracking
@@ -593,7 +617,7 @@ export const Settings: React.FC = () => {
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                  </label>
+                    </label>
                 </div>
               </div>
             </div>
@@ -614,28 +638,28 @@ export const Settings: React.FC = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => theme === 'dark' && toggleTheme()}
-                  className={`p-6 border-2 rounded-xl flex flex-col items-center justify-center ${
+                  className={`p-4 md:p-6 border-2 rounded-xl flex flex-col items-center justify-center ${
                     theme === 'light' 
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
                       : 'border-gray-300 dark:border-gray-600'
                   } shadow-sm`}
                 >
-                  <Sun className="w-8 h-8 mb-2" />
-                  <span className="font-medium">Light Mode</span>
+                  <Sun className="w-6 h-6 md:w-8 md:h-8 mb-2" />
+                  <span className="font-medium text-sm md:text-base">Light Mode</span>
                 </motion.button>
                 
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => theme === 'light' && toggleTheme()}
-                  className={`p-6 border-2 rounded-xl flex flex-col items-center justify-center ${
+                  className={`p-4 md:p-6 border-2 rounded-xl flex flex-col items-center justify-center ${
                     theme === 'dark' 
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
                       : 'border-gray-300 dark:border-gray-600'
                   } shadow-sm`}
                 >
-                  <Moon className="w-8 h-8 mb-2" />
-                  <span className="font-medium">Dark Mode</span>
+                  <Moon className="w-6 h-6 md:w-8 md:h-8 mb-2" />
+                  <span className="font-medium text-sm md:text-base">Dark Mode</span>
                 </motion.button>
               </div>
             </div>
@@ -652,14 +676,14 @@ export const Settings: React.FC = () => {
                       key={scheme}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 border-2 rounded-xl text-center ${
+                      className={`p-3 border-2 rounded-xl text-center ${
                         appearance.colorScheme === scheme.toLowerCase()
                           ? 'border-blue-500' 
                           : 'border-gray-300 dark:border-gray-600'
                       } shadow-sm`}
                       onClick={() => setAppearance(prev => ({ ...prev, colorScheme: scheme.toLowerCase() }))}
                     >
-                      <div className={`w-full h-16 rounded mb-2 bg-gradient-to-r ${
+                      <div className={`w-full h-12 rounded mb-2 bg-gradient-to-r ${
                         scheme === 'Ocean' ? 'from-blue-400 to-blue-600' :
                         scheme === 'Forest' ? 'from-green-400 to-green-600' :
                         scheme === 'Sunset' ? 'from-orange-400 to-red-500' :
@@ -668,7 +692,7 @@ export const Settings: React.FC = () => {
                         scheme === 'Mint' ? 'from-emerald-400 to-teal-500' :
                         'from-gray-400 to-gray-600'
                       }`} />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                         {scheme}
                       </span>
                     </motion.button>
@@ -683,7 +707,7 @@ export const Settings: React.FC = () => {
                 Accessibility
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       Reduced Motion
@@ -703,7 +727,7 @@ export const Settings: React.FC = () => {
                   </label>
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       High Contrast Mode
@@ -723,14 +747,14 @@ export const Settings: React.FC = () => {
                   </label>
                 </div>
                 
-                <div>
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Font Size
                   </label>
                   <select
                     value={appearance.fontSize}
                     onChange={(e) => setAppearance(prev => ({ ...prev, fontSize: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="small">Small</option>
                     <option value="medium">Medium</option>
@@ -743,7 +767,7 @@ export const Settings: React.FC = () => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+              className="flex items-center justify-center w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md"
             >
               <Save className="w-5 h-5 mr-2" />
               Save Appearance Settings
@@ -781,16 +805,16 @@ export const Settings: React.FC = () => {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleUpgradePlan}
                 disabled={loading}
-                className="w-full flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-md"
+                className="w-full flex items-center justify-center px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl hover:from-yellow-600 hover:to-orange-600 disabled:opacity-50 transition-colors shadow-md"
               >
-                <Crown className="w-5 h-5 mr-2 text-yellow-300" />
+                <Crown className="w-5 h-5 mr-2 text-white" />
                 {loading ? 'Upgrading...' : 'Upgrade to Premium'}
               </motion.button>
             )}
             
             <div className="space-y-4">
               <h3 className="text-base font-semibold text-gray-900 dark:text-white">Billing History</h3>
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center text-gray-500 dark:text-gray-400">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-center text-gray-500 dark:text-gray-400">
                 No billing history yet
               </div>
             </div>
@@ -810,13 +834,13 @@ export const Settings: React.FC = () => {
                   <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
                     Download all your tasks, settings, and account data in JSON or CSV format.
                   </p>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleExportData}
                       disabled={loading}
-                      className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      className="flex-1 flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       {loading ? 'Exporting...' : 'Export JSON'}
@@ -826,7 +850,7 @@ export const Settings: React.FC = () => {
                       whileTap={{ scale: 0.98 }}
                       onClick={handleExportData}
                       disabled={loading}
-                      className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      className="flex-1 flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       {loading ? 'Exporting...' : 'Export CSV'}
@@ -849,7 +873,7 @@ export const Settings: React.FC = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
                   >
                     <Upload className="w-4 h-4 mr-2" />
                     Import Data
@@ -873,7 +897,7 @@ export const Settings: React.FC = () => {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleDeleteAccount}
                     disabled={loading}
-                    className="w-full flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    className="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 transition-colors"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     {loading ? 'Processing...' : 'Delete Account'}
@@ -890,72 +914,141 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8"
-      >
-        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-          Settings
-        </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-          Manage your account preferences and application settings.
-        </p>
-      </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Mobile Header */}
+      {isMobile && (
+        <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
+          <button 
+            onClick={toggleMobileSidebar}
+            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"
+          >
+            {isMobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Settings
+          </h1>
+          
+          <button 
+            onClick={handleLogout}
+            className="p-2 rounded-lg text-red-600 dark:text-red-400"
+          >
+            <LogOut size={20} />
+          </button>
+        </div>
+      )}
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar */}
-        <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="lg:w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 sticky top-4 h-fit"
-        >
-          <nav className="space-y-1">
-            {tabs.map((tab) => (
+      <div className="p-4 sm:p-6 space-y-6">
+        {/* Desktop Header */}
+        {!isMobile && (
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8"
+          >
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              Settings
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+              Manage your account preferences and application settings.
+            </p>
+          </motion.div>
+        )}
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Mobile Sidebar Overlay */}
+          {isMobile && isMobileSidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-20"
+              onClick={() => setIsMobileSidebarOpen(false)}
+            />
+          )}
+
+          {/* Sidebar */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className={`lg:w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 lg:sticky lg:top-4 h-fit ${
+              isMobile 
+                ? `fixed top-0 left-0 h-full w-64 z-30 transform transition-transform duration-300 ${
+                    isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                  }`
+                : ''
+            }`}
+          >
+            {isMobile && (
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Settings</h2>
+                <button onClick={() => setIsMobileSidebarOpen(false)}>
+                  <X size={24} />
+                </button>
+              </div>
+            )}
+            
+            <nav className="space-y-1">
+              {tabs.map((tab) => (
+                <motion.button
+                  key={tab.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (isMobile) setIsMobileSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center px-4 py-3 rounded-xl text-base font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 shadow-sm'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <tab.icon size={20} className="mr-3" />
+                  {tab.label}
+                </motion.button>
+              ))}
+            </nav>
+            
+            {!isMobile && (
               <motion.button
-                key={tab.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 shadow-sm'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
+                onClick={handleLogout}
+                className="w-full flex items-center px-4 py-3 rounded-xl text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors mt-6"
               >
-                <tab.icon size={20} className="mr-3" />
-                {tab.label}
+                <LogOut size={20} className="mr-3" />
+                Log Out
               </motion.button>
-            ))}
-          </nav>
-          
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleLogout}
-            className="w-full flex items-center px-4 py-3 rounded-lg text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors mt-6"
-          >
-            <LogOut size={20} className="mr-3" />
-            Log Out
-          </motion.button>
-        </motion.div>
+            )}
+          </motion.div>
 
-        {/* Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 md:p-8"
-        >
-          {renderTabContent()}
-        </motion.div>
+          {/* Content */}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
+          >
+            {/* Mobile Tab Header */}
+            {isMobile && (
+              <div className="flex items-center mb-6">
+                <button 
+                  onClick={() => setIsMobileSidebarOpen(true)}
+                  className="p-2 mr-3 rounded-lg bg-gray-100 dark:bg-gray-700"
+                >
+                  <Menu size={20} />
+                </button>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {tabs.find(tab => tab.id === activeTab)?.label}
+                </h2>
+              </div>
+            )}
+            
+            {renderTabContent()}
+          </motion.div>
+        </div>
       </div>
-      <BottomBar />
     </div>
   );
 };
