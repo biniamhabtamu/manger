@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon, 
-  X, 
-  CheckCircle, 
-  Circle, 
-  AlertCircle, 
-  Clock, 
-  Archive, 
-  Plus, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  X,
+  CheckCircle,
+  Circle,
+  AlertCircle,
+  Clock,
+  Archive,
+  Plus,
   Filter,
   ChevronDown,
   ChevronUp,
@@ -27,7 +27,7 @@ import {
   Target,
   User,
   Tag,
-  Zap
+  Zap,
 } from 'lucide-react';
 import { Task, SubTask, TaskStatus, Priority, TaskCategory } from './task';
 import { TaskForm } from '../components/tasks/TaskForm';
@@ -72,6 +72,22 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } },
 };
 
+// Skeleton loader card component
+const SkeletonCard: React.FC = () => (
+  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl animate-pulse shadow-sm">
+    <div className="flex justify-between items-start">
+      <div className="flex items-start gap-3 w-full">
+        <div className="mt-1 w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4" />
+          <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/2" />
+        </div>
+      </div>
+      <div className="h-4 w-12 bg-gray-300 dark:bg-gray-600 rounded-full ml-2" />
+    </div>
+  </div>
+);
+
 export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -81,13 +97,23 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
   const [showCalendar, setShowCalendar] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // State for loading
 
   useEffect(() => {
+    // Simulate data fetching with a delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // 2 second loading delay
+
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   const toggleDarkMode = () => {
@@ -190,31 +216,31 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
                       </span>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setSelectedTask(null)}
                     className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
                     <X size={24} />
                   </button>
                 </div>
-                
+
                 {selectedTask.description && (
                   <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">{selectedTask.description}</p>
                 )}
-                
+
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
                     {getStatusIcon(selectedTask.status)}
                     <span className={`font-semibold text-lg ${
                       selectedTask.status === 'completed' ? 'text-green-600 dark:text-green-400' :
-                      selectedTask.status === 'in-progress' ? 'text-yellow-600 dark:text-yellow-400' :
-                      selectedTask.status === 'archived' ? 'text-purple-600 dark:text-purple-400' :
-                      'text-gray-600 dark:text-gray-400'
-                    }`}>
+                        selectedTask.status === 'in-progress' ? 'text-yellow-600 dark:text-yellow-400' :
+                          selectedTask.status === 'archived' ? 'text-purple-600 dark:text-purple-400' :
+                            'text-gray-600 dark:text-gray-400'
+                      }`}>
                       {selectedTask.status.replace('-', ' ')}
                     </span>
                   </div>
-                  
+
                   {selectedTask.dueDate && (
                     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                       <Clock className="text-blue-500" size={20} />
@@ -223,7 +249,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
                       </span>
                     </div>
                   )}
-                  
+
                   {selectedTask.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {selectedTask.tags.map(tag => (
@@ -233,7 +259,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
                       ))}
                     </div>
                   )}
-                  
+
                   {selectedTask.subtasks.length > 0 && (
                     <div>
                       <div className="flex justify-between items-center mb-3">
@@ -243,7 +269,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
-                        <div 
+                        <div
                           className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${getSubtaskProgress(selectedTask.subtasks)}%` }}
                         />
@@ -251,8 +277,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
                       <ul className="space-y-3">
                         {selectedTask.subtasks.map(subtask => (
                           <li key={subtask.id} className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <input 
-                              type="checkbox" 
+                            <input
+                              type="checkbox"
                               checked={subtask.completed}
                               readOnly
                               className="rounded text-blue-500 focus:ring-blue-500 w-5 h-5"
@@ -277,13 +303,13 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Calendar</h1>
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={toggleDarkMode}
               className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700"
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <button 
+            <button
               onClick={() => setShowTaskForm(true)}
               className="p-2 rounded-full bg-blue-500 text-white shadow-sm"
             >
@@ -298,10 +324,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
             <button
               onClick={() => setShowCalendar(true)}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center space-x-1 ${
-                showCalendar 
-                  ? 'bg-blue-500 text-white shadow-sm' 
+                showCalendar
+                  ? 'bg-blue-500 text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400'
-              }`}
+                }`}
             >
               <CalendarIcon size={16} />
               <span>Calendar</span>
@@ -309,10 +335,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
             <button
               onClick={() => setShowCalendar(false)}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center space-x-1 ${
-                !showCalendar 
-                  ? 'bg-blue-500 text-white shadow-sm' 
+                !showCalendar
+                  ? 'bg-blue-500 text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400'
-              }`}
+                }`}
             >
               <List size={16} />
               <span>Tasks</span>
@@ -325,7 +351,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
         {/* Calendar Panel */}
         <AnimatePresence>
           {(!isMobile || showCalendar) && (
-            <motion.section 
+            <motion.section
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -395,7 +421,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
         {/* Task List Panel */}
         <AnimatePresence>
           {(!isMobile || !showCalendar) && (
-            <motion.section 
+            <motion.section
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -406,9 +432,9 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                   {tasksForSelectedDay.length} {tasksForSelectedDay.length === 1 ? 'Task' : 'Tasks'} for {selectedDay?.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                 </h3>
-                
+
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={() => setShowFilters(!showFilters)}
                     className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
                   >
@@ -452,8 +478,14 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
                 )}
               </AnimatePresence>
 
-              {tasksForSelectedDay.length === 0 ? (
-                <motion.div 
+              {isLoading ? (
+                <div className="space-y-3">
+                  <SkeletonCard />
+                  <SkeletonCard />
+                  <SkeletonCard />
+                </div>
+              ) : tasksForSelectedDay.length === 0 ? (
+                <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex flex-col items-center justify-center text-center p-6"
@@ -484,7 +516,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
                 >
                   <AnimatePresence>
                     {tasksForSelectedDay.map(task => (
-                      <motion.li 
+                      <motion.li
                         key={task.id}
                         variants={itemVariants}
                         layout
@@ -514,7 +546,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
                               </div>
                               {task.subtasks.length > 0 && (
                                 <div className="mt-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                                  <div 
+                                  <div
                                     className="bg-blue-500 h-1.5 rounded-full"
                                     style={{ width: `${getSubtaskProgress(task.subtasks)}%` }}
                                   />
@@ -538,7 +570,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
         </AnimatePresence>
 
         {/* Mobile Optimization Notice */}
-        <motion.div 
+        <motion.div
           className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -553,7 +585,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ tasks }) => {
               Switch between calendar and task views for the best mobile experience.
             </p>
           </div>
-        </motion.div>
+        </motion.div>        npx @capacitor/assets generate        npx @capacitor/assets generate        npx @capacitor/assets generate        npx @capacitor/assets generate        npx @capacitor/assets generate        npx @capacitor/assets generate        npx @capacitor/assets generate
       </div>
 
       <TaskForm

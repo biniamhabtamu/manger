@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CheckSquare, 
-  Clock, 
-  TrendingUp, 
+import {
+  CheckSquare,
+  Clock,
+  TrendingUp,
   AlertTriangle,
   Calendar,
   Target,
@@ -113,6 +113,107 @@ const TaskCard = ({ task, index, compact = false }) => {
   );
 };
 
+// --- NEW Skeleton Components ---
+
+const DashboardSkeleton: React.FC = () => {
+  // Skeleton for a single StatCard
+  const StatCardSkeleton = () => (
+    <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-28 animate-pulse">
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <div className="h-4 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
+          <div className="h-6 w-16 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+        </div>
+        <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+      </div>
+    </div>
+  );
+
+  // Skeleton for a single TaskCard
+  const TaskCardSkeleton = () => (
+    <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-3 shadow-sm border border-gray-200 dark:border-gray-600 animate-pulse">
+      <div className="flex justify-between items-start">
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="h-4 w-3/4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+          <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-600 rounded"></div>
+        </div>
+        <div className="h-4 w-4 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4 space-y-4 pb-20">
+      {/* Header Skeleton */}
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-4 rounded-xl shadow-md">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <div className="h-6 w-48 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
+          </div>
+          <div className="flex gap-2">
+            <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse"></div>
+            <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* View Toggle Skeleton */}
+      <div className="flex bg-white dark:bg-gray-800 rounded-xl p-1 shadow-md animate-pulse">
+          <div className="flex-1 py-2 px-4 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          <div className="flex-1 py-2 px-4 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          <div className="flex-1 py-2 px-4 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      </div>
+
+      {/* Stats Grid Skeleton */}
+      <div className="grid grid-cols-2 gap-3">
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+      </div>
+
+      {/* Completion Rate Skeleton */}
+      <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-28 animate-pulse">
+        <div className="h-5 w-3/4 bg-gray-300 dark:bg-gray-600 rounded mb-3"></div>
+        <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+        <div className="bg-gray-300 dark:bg-gray-600 rounded-full h-2"></div>
+      </div>
+
+      {/* Quick Actions Skeleton */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 animate-pulse">
+        <div className="h-5 w-32 bg-gray-200 dark:bg-gray-600 rounded mb-4"></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-xl h-16"></div>
+          <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-xl h-16"></div>
+        </div>
+      </div>
+
+      {/* Priority Tasks Skeleton */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 animate-pulse">
+        <div className="h-5 w-36 bg-gray-200 dark:bg-gray-600 rounded mb-4"></div>
+        <div className="space-y-3">
+          <TaskCardSkeleton />
+          <TaskCardSkeleton />
+        </div>
+      </div>
+      
+      {/* Motivational Tip Skeleton */}
+      <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-24 animate-pulse">
+        <div className="flex items-center gap-3">
+            <div className="h-5 w-5 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+            <div className="space-y-2">
+                <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                <div className="h-3 w-48 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- END NEW SKELETON COMPONENTS ---
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -133,6 +234,18 @@ export const Dashboard: React.FC = () => {
   const [activeView, setActiveView] = useState<'overview' | 'recent' | 'upcoming'>('overview');
   const [showFilters, setShowFilters] = useState(false);
   const [motivationIndex, setMotivationIndex] = useState(0);
+  
+  // State for the 2-second delay
+  const [isDelayedLoading, setIsDelayedLoading] = useState(true);
+
+  // Simulates a minimum loading time for a smoother user experience
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsDelayedLoading(false);
+    }, 2000); // 2 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const motivations = [
     "The secret of getting ahead is getting started. - Mark Twain",
@@ -147,19 +260,9 @@ export const Dashboard: React.FC = () => {
     setMotivationIndex((prev) => (prev + 1) % motivations.length);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"
-          ></motion.div>
-          <p className="text-gray-600 dark:text-gray-300">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
+  // Condition to show the skeleton loader
+  if (loading || isDelayedLoading) {
+    return <DashboardSkeleton />;
   }
 
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
@@ -224,8 +327,8 @@ export const Dashboard: React.FC = () => {
           <button
             onClick={() => setActiveView('overview')}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center space-x-1 ${
-              activeView === 'overview' 
-                ? 'bg-blue-500 text-white shadow-sm' 
+              activeView === 'overview'
+                ? 'bg-blue-500 text-white shadow-sm'
                 : 'text-gray-600 dark:text-gray-400'
             }`}
           >
@@ -235,8 +338,8 @@ export const Dashboard: React.FC = () => {
           <button
             onClick={() => setActiveView('recent')}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center space-x-1 ${
-              activeView === 'recent' 
-                ? 'bg-blue-500 text-white shadow-sm' 
+              activeView === 'recent'
+                ? 'bg-blue-500 text-white shadow-sm'
                 : 'text-gray-600 dark:text-gray-400'
             }`}
           >
@@ -246,8 +349,8 @@ export const Dashboard: React.FC = () => {
           <button
             onClick={() => setActiveView('upcoming')}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center space-x-1 ${
-              activeView === 'upcoming' 
-                ? 'bg-blue-500 text-white shadow-sm' 
+              activeView === 'upcoming'
+                ? 'bg-blue-500 text-white shadow-sm'
                 : 'text-gray-600 dark:text-gray-400'
             }`}
           >
@@ -313,7 +416,7 @@ export const Dashboard: React.FC = () => {
               className="space-y-4"
             >
               {/* Stats Grid */}
-              <motion.div 
+              <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -469,7 +572,7 @@ export const Dashboard: React.FC = () => {
                     No recent tasks found.
                   </div>
                 ) : (
-                  <motion.div 
+                  <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
@@ -501,15 +604,15 @@ export const Dashboard: React.FC = () => {
                     No upcoming deadlines. Great job!
                   </div>
                 ) : (
-                  <motion.div 
+                  <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
                     className="space-y-3"
                   >
                     {upcomingTasks.map((task) => (
-                      <motion.li 
-                        key={task.id} 
+                      <motion.li
+                        key={task.id}
                         variants={itemVariants}
                         className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                       >
@@ -555,7 +658,7 @@ export const Dashboard: React.FC = () => {
         </motion.div>
 
         {/* Mobile Optimization Notice */}
-        <motion.div 
+        <motion.div
           className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

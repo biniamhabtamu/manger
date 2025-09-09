@@ -99,6 +99,71 @@ const sortOptions = [
   { value: 'title-desc', label: 'Title (Z-A)', icon: <SortDesc size={16} /> },
 ];
 
+// --- NEW SKELETON COMPONENTS ---
+const CategoriesSkeleton: React.FC = () => {
+    // Skeleton for a single category card
+    const CategoryCardSkeleton = () => (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 animate-pulse overflow-hidden">
+            <div className="bg-gray-200 dark:bg-gray-700 p-5 h-40">
+                <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 mb-3"></div>
+                <div className="h-6 w-3/4 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+                <div className="h-4 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+            </div>
+            <div className="p-4">
+                <div className="h-4 w-1/2 bg-gray-200 dark:bg-gray-600 rounded mb-2"></div>
+                <div className="h-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full"></div>
+            </div>
+        </div>
+    );
+
+    // Skeleton for a single task card
+    const TaskCardSkeleton = () => (
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse">
+            <div className="flex justify-between items-start">
+                <div className="flex-1 min-w-0 space-y-2">
+                    <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                    <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                </div>
+                <div className="h-4 w-4 bg-gray-200 dark:bg-gray-600 rounded-full"></div>
+            </div>
+        </div>
+    );
+
+    const { category } = useParams<{ category: string }>();
+
+    if (!category) {
+        return (
+            <div className="p-4 space-y-6 bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen pb-20">
+                <div className="h-8 w-64 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse mb-4"></div>
+                <div className="grid grid-cols-1 gap-4">
+                    {[1, 2, 3, 4, 5].map(i => <CategoryCardSkeleton key={i} />)}
+                </div>
+                <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-24 animate-pulse"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 pb-20">
+            {/* Category Header Skeleton */}
+            <div className="bg-gray-200 dark:bg-gray-700 h-48 rounded-b-3xl animate-pulse"></div>
+
+            <div className="p-4 space-y-4">
+                {/* Search & Controls Skeleton */}
+                <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
+                <div className="h-24 w-full bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
+
+                {/* Task List Skeletons */}
+                <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map(i => <TaskCardSkeleton key={i} />)}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- END SKELETON COMPONENTS ---
+
 export const Categories: React.FC = () => {
   const { category } = useParams<{ category: string }>();
   const { tasks, loading, updateTask, deleteTask } = useTasks();
@@ -112,6 +177,18 @@ export const Categories: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
+
+  // State for the 2-second delay
+  const [isDelayedLoading, setIsDelayedLoading] = useState(true);
+
+  // Simulates a minimum loading time for a smoother user experience
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsDelayedLoading(false);
+    }, 2000); // 2 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -184,19 +261,9 @@ export const Categories: React.FC = () => {
     });
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"
-          ></motion.div>
-          <p className="text-gray-600 dark:text-gray-300">Loading your tasks...</p>
-        </div>
-      </div>
-    );
+  // Use the new skeleton component
+  if (loading || isDelayedLoading) {
+    return <CategoriesSkeleton />;
   }
 
   // --- Show all categories overview ---
