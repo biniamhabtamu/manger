@@ -20,7 +20,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export const BottomBar: React.FC = () => {
+interface BottomBarProps {
+  onTaskFormOpen: () => void;
+}
+
+export const BottomBar: React.FC<BottomBarProps> = ({ onTaskFormOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeItem, setActiveItem] = useState(location.pathname);
@@ -71,6 +75,11 @@ export const BottomBar: React.FC = () => {
     navigate('/login');
   };
 
+  const handleCreateTask = () => {
+    onTaskFormOpen();
+    setShowActionMenu(false);
+  };
+
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
@@ -79,7 +88,7 @@ export const BottomBar: React.FC = () => {
         
         {/* Main navigation */}
         <div className="relative flex items-center justify-around px-1 py-2">
-          {menuItems.map((item) => {
+          {menuItems.slice(0, 2).map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
             
@@ -115,23 +124,86 @@ export const BottomBar: React.FC = () => {
             );
           })}
           
-          {/* Floating action button */}
-          <div className="relative">
+          {/* Centered Create Task button */}
+          <div className="relative flex flex-col items-center justify-center">
             <motion.button
-              className="flex items-center justify-center w-14 h-14 -mt-6 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40"
+              className="flex items-center justify-center w-16 h-16 -mt-6 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
+              onClick={handleCreateTask}
+            >
+              <Plus size={28} />
+            </motion.button>
+            <span className="text-xs mt-1 text-blue-600 dark:text-blue-400 font-medium">
+              Create
+            </span>
+          </div>
+
+          {menuItems.slice(2).map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="flex flex-col items-center justify-center w-14"
+                onClick={() => {
+                  setActiveItem(item.path);
+                  setShowActionMenu(false);
+                }}
+              >
+                <motion.div
+                  className={`p-2 rounded-xl flex items-center justify-center transition-all ${
+                    active 
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' 
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                  }`}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Icon size={20} />
+                </motion.div>
+                <span className={`text-xs mt-1 transition-colors ${
+                  active 
+                    ? 'text-blue-600 dark:text-blue-400 font-medium' 
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+          
+          {/* Menu button for additional actions */}
+          <div className="relative flex flex-col items-center justify-center">
+            <motion.button
+              className="flex items-center justify-center w-14"
               onClick={toggleActionMenu}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
             >
               <motion.div
-                animate={{ rotate: showActionMenu ? 135 : 0 }}
+                className={`p-2 rounded-xl flex items-center justify-center transition-all ${
+                  showActionMenu 
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+                animate={{ rotate: showActionMenu ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {showActionMenu ? <X size={24} /> : <Plus size={24} />}
+                {showActionMenu ? <X size={20} /> : <Settings size={20} />}
               </motion.div>
             </motion.button>
+            <span className={`text-xs mt-1 transition-colors ${
+              showActionMenu 
+                ? 'text-blue-600 dark:text-blue-400 font-medium' 
+                : 'text-gray-500 dark:text-gray-400'
+            }`}>
+              Menu
+            </span>
 
-            {/* Action menu that appears when FAB is clicked */}
+            {/* Action menu that appears when menu button is clicked */}
             <AnimatePresence>
               {showActionMenu && (
                 <motion.div

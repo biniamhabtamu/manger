@@ -568,7 +568,9 @@ export const Tasks: React.FC = () => {
         isOpen={showTaskForm}
         onClose={() => setShowTaskForm(false)}
       />
-      <BottomBar />
+<div className="fixed bottom-0 left-0 right-0 z-30">
+      <BottomBar  />
+</div>
     </div>
   );
 };

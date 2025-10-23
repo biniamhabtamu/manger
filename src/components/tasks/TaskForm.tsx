@@ -420,6 +420,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category })
               </form>
             </div>
 
+            {/* This is the bottom action bar for the TaskForm */}
             <div className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white/95 via-white/95 to-white/90 dark:from-gray-800/95 dark:via-gray-800/95 dark:to-gray-800/90 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50">
               <div className="flex justify-between space-x-3 max-w-md mx-auto">
                 <button 
@@ -458,3 +459,5 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category })
     </AnimatePresence>
   );
 };
+
+// The rest of your code continues here...
