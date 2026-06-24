@@ -29,11 +29,12 @@ interface TaskFormProps {
   isOpen: boolean;
   onClose: () => void;
   category?: TaskCategory;
+  initialDueDate?: Date;
 }
 
 const DRAFT_KEY = 'taskFormDraft_v2';
 
-export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category }) => {
+export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category, initialDueDate }) => {
   const { addTask, tasks } = useTasks() as any;
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
   const [formData, setFormData] = useState({
@@ -42,7 +43,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category })
     category: (category || ('code-tasks' as TaskCategory)) as TaskCategory,
     priority: 'medium' as Priority,
     timeframe: 'daily' as Timeframe,
-    dueDate: '',
+    dueDate: initialDueDate ? initialDueDate.toISOString().split('T')[0] : '',
     tags: [] as string[],
     estimate: '' as string,
   });
@@ -128,7 +129,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category })
       category: (category || ('code-tasks' as TaskCategory)) as TaskCategory,
       priority: 'medium' as Priority,
       timeframe: 'daily' as Timeframe,
-      dueDate: '',
+      dueDate: initialDueDate ? initialDueDate.toISOString().split('T')[0] : '',
       tags: [],
       estimate: '',
     });
@@ -201,16 +202,20 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category })
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-end justify-center z-50">
+        // Fixed z-index to be above everything including BottomBar (z-50)
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-end justify-center z-[100]">
           <motion.div
             initial={{ opacity: 0, y: '100%' }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-hidden"
+            className="bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-hidden relative"
           >
+            {/* Handle/Pull indicator */}
+            <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mt-2 flex-shrink-0" />
+
             {/* Header */}
-            <div className="sticky top-0 bg-white dark:bg-gray-900 pt-5 px-5 pb-3 border-b border-gray-100 dark:border-gray-800 z-10">
+            <div className="sticky top-0 bg-white dark:bg-gray-900 pt-3 px-5 pb-3 border-b border-gray-100 dark:border-gray-800 z-10">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -233,8 +238,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category })
               <div className="flex gap-1 mt-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
                 <button
                   className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${activeTab === 'basic'
-                      ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
-                      : 'text-gray-500 dark:text-gray-400'
+                    ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
+                    : 'text-gray-500 dark:text-gray-400'
                     }`}
                   onClick={() => setActiveTab('basic')}
                 >
@@ -242,8 +247,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category })
                 </button>
                 <button
                   className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${activeTab === 'advanced'
-                      ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
-                      : 'text-gray-500 dark:text-gray-400'
+                    ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
+                    : 'text-gray-500 dark:text-gray-400'
                     }`}
                   onClick={() => setActiveTab('advanced')}
                 >
@@ -345,11 +350,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category })
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, priority: p.value as Priority }))}
                         className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${formData.priority === p.value
-                            ? `bg-gradient-to-r ${p.value === 'low' ? 'from-emerald-400 to-emerald-500' :
-                              p.value === 'medium' ? 'from-yellow-400 to-yellow-500' :
-                                p.value === 'high' ? 'from-orange-400 to-orange-500' :
-                                  'from-red-400 to-red-500'} text-white`
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                          ? `bg-gradient-to-r ${p.value === 'low' ? 'from-emerald-400 to-emerald-500' :
+                            p.value === 'medium' ? 'from-yellow-400 to-yellow-500' :
+                              p.value === 'high' ? 'from-orange-400 to-orange-500' :
+                                'from-red-400 to-red-500'
+                          } text-white`
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                           }`}
                       >
                         {p.icon} {p.label}
@@ -414,8 +420,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, category })
                           type="button"
                           onClick={() => quickDue(item.days)}
                           className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all ${formData.dueDate === new Date(Date.now() + item.days * 86400000).toISOString().slice(0, 10)
-                              ? 'bg-purple-500 text-white'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-purple-500 text-white'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                             }`}
                         >
                           {item.label}

@@ -1,14 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-// Fix: Import Layout as default since it's exported that way
 import Layout from './components/layout/Layout';
-// OR keep both imports if needed:
-// import { Layout } from './components/layout/Layout';
-// import Layout from './components/layout/Layout';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
@@ -54,8 +50,7 @@ const AppBackHandler = () => {
         if (currentTime - lastBackPressRef.current < DOUBLE_PRESS_DELAY) {
           CapacitorApp.exitApp().catch(console.error);
         } else {
-          // Use toast from react-hot-toast instead
-          const toast = require('react-hot-toast').default;
+          // Use toast directly from react-hot-toast
           toast('Press back again to exit', {
             duration: 2000,
             icon: '👋',
@@ -100,6 +95,7 @@ function App() {
         <Router>
           <div className="App">
             <OfflineIndicator />
+            {/* Removed ref from Toaster - fixed the warning */}
             <Toaster
               position="top-center"
               toastOptions={{
@@ -111,7 +107,6 @@ function App() {
                   borderRadius: '8px',
                 },
               }}
-              ref={(ref) => { window.Toaster = ref; }}
             />
 
             {isNativePlatform && <AppBackHandler />}
@@ -210,7 +205,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
               <Route
                 path="*"
                 element={
@@ -226,7 +220,7 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Layout>
-                      <BottomBar />
+                      <BottomBar onTaskFormOpen={() => { }} />
                     </Layout>
                   </ProtectedRoute>
                 }

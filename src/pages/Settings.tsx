@@ -1,72 +1,103 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, 
-  Bell, 
-  Shield, 
-  Palette, 
-  Download, 
-  Trash2, 
+import {
+  User,
+  Bell,
+  Shield,
+  Palette,
+  Download,
+  Trash2,
   Save,
   Eye,
   EyeOff,
   Smartphone,
   Mail,
-  Globe,
   Moon,
   Sun,
   Lock,
   Upload,
   Key,
-  Smartphone as Mobile,
   LogOut,
   CreditCard,
   Palette as ThemeIcon,
-  Globe as Language,
   Accessibility,
-  ChevronLeft,
   Menu,
   X,
-  Crown
+  Crown,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import toast from 'react-hot-toast';
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } },
-};
+import { BottomBar } from '../components/layout/BottomBar';
 
 export const Settings: React.FC = () => {
   const { userProfile, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setIsMobileSidebarOpen(false);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setIsSidebarOpen(false);
       }
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Handle click outside to close sidebar
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isMobile && isSidebarOpen && sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobile, isSidebarOpen]);
+
+  // Handle escape key to close sidebar
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isSidebarOpen) {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isSidebarOpen]);
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isSidebarOpen && isMobile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isSidebarOpen, isMobile]);
+
+  const tabs = [
+    { id: 'profile', label: 'Profile', icon: User, color: 'text-blue-500' },
+    { id: 'notifications', label: 'Notifications', icon: Bell, color: 'text-purple-500' },
+    { id: 'privacy', label: 'Security', icon: Shield, color: 'text-emerald-500' },
+    { id: 'appearance', label: 'Appearance', icon: Palette, color: 'text-amber-500' },
+    { id: 'billing', label: 'Billing', icon: CreditCard, color: 'text-indigo-500' },
+    { id: 'data', label: 'Data', icon: Download, color: 'text-rose-500' },
+  ];
 
   // Profile settings
   const [profileData, setProfileData] = useState({
@@ -115,15 +146,6 @@ export const Settings: React.FC = () => {
     cardLast4: '4242',
     nextBilling: '2024-09-01',
   });
-
-  const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'privacy', label: 'Security', icon: Shield },
-    { id: 'appearance', label: 'Appearance', icon: Palette },
-    { id: 'billing', label: 'Billing', icon: CreditCard },
-    { id: 'data', label: 'Data', icon: Download },
-  ];
 
   const handleSaveProfile = async () => {
     setLoading(true);
@@ -221,8 +243,12 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const toggleMobileSidebar = () => {
-    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
   };
 
   const renderTabContent = () => {
@@ -233,15 +259,15 @@ export const Settings: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex flex-col items-center">
                 <div className="relative group">
-                  <motion.div 
+                  <motion.div
                     className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden shadow-lg cursor-pointer"
                     whileHover={{ scale: 1.05 }}
                     onClick={handleAvatarClick}
                   >
                     {profileData.avatar ? (
-                      <img 
-                        src={URL.createObjectURL(profileData.avatar)} 
-                        alt="Avatar" 
+                      <img
+                        src={URL.createObjectURL(profileData.avatar)}
+                        alt="Avatar"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -257,21 +283,21 @@ export const Settings: React.FC = () => {
                     accept="image/*"
                     className="hidden"
                   />
-                  <motion.div 
+                  <motion.div
                     className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
                     initial={false}
                   >
                     <Upload className="text-white" size={20} />
                   </motion.div>
                 </div>
-                <button 
+                <button
                   onClick={handleAvatarClick}
                   className="mt-3 text-sm text-blue-600 dark:text-blue-400 font-medium"
                 >
                   Change Photo
                 </button>
               </div>
-              
+
               <div className="flex-1 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -284,7 +310,7 @@ export const Settings: React.FC = () => {
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Email Address
@@ -296,7 +322,7 @@ export const Settings: React.FC = () => {
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Phone Number
@@ -310,7 +336,7 @@ export const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Bio
@@ -340,7 +366,7 @@ export const Settings: React.FC = () => {
                   <option value="de">Deutsch</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Timezone
@@ -357,7 +383,7 @@ export const Settings: React.FC = () => {
                 </select>
               </div>
             </div>
-            
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -393,7 +419,7 @@ export const Settings: React.FC = () => {
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Weekly Reports</span>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -406,7 +432,7 @@ export const Settings: React.FC = () => {
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Marketing Emails</span>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -421,10 +447,10 @@ export const Settings: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Mobile size={20} />
+                  <Smartphone size={20} />
                   Push Notifications
                 </h3>
                 <div className="space-y-4">
@@ -440,7 +466,7 @@ export const Settings: React.FC = () => {
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Sound Alerts</span>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -453,7 +479,7 @@ export const Settings: React.FC = () => {
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Vibration</span>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -469,7 +495,7 @@ export const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -489,7 +515,7 @@ export const Settings: React.FC = () => {
                 <Lock size={20} />
                 Security
               </h3>
-              
+
               <div className="space-y-6">
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex-1">
@@ -511,7 +537,7 @@ export const Settings: React.FC = () => {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-                
+
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Change Password
@@ -534,7 +560,7 @@ export const Settings: React.FC = () => {
                         {privacy.showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
                     </div>
-                    
+
                     <input
                       type={privacy.showPassword ? 'text' : 'password'}
                       value={privacy.confirmPassword}
@@ -542,7 +568,7 @@ export const Settings: React.FC = () => {
                       placeholder="Confirm new password"
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
-                    
+
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -557,13 +583,13 @@ export const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div>
               <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Shield size={20} />
                 Privacy
               </h3>
-              
+
               <div className="space-y-6">
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -579,7 +605,7 @@ export const Settings: React.FC = () => {
                     <option value="friends">Friends Only</option>
                   </select>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -599,7 +625,7 @@ export const Settings: React.FC = () => {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -617,7 +643,7 @@ export const Settings: React.FC = () => {
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                    </label>
+                  </label>
                 </div>
               </div>
             </div>
@@ -632,38 +658,36 @@ export const Settings: React.FC = () => {
                 <ThemeIcon size={20} />
                 Theme
               </h3>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => theme === 'dark' && toggleTheme()}
-                  className={`p-4 md:p-6 border-2 rounded-xl flex flex-col items-center justify-center ${
-                    theme === 'light' 
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                      : 'border-gray-300 dark:border-gray-600'
-                  } shadow-sm`}
+                  className={`p-4 md:p-6 border-2 rounded-xl flex flex-col items-center justify-center ${theme === 'light'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-300 dark:border-gray-600'
+                    } shadow-sm`}
                 >
                   <Sun className="w-6 h-6 md:w-8 md:h-8 mb-2" />
                   <span className="font-medium text-sm md:text-base">Light Mode</span>
                 </motion.button>
-                
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => theme === 'light' && toggleTheme()}
-                  className={`p-4 md:p-6 border-2 rounded-xl flex flex-col items-center justify-center ${
-                    theme === 'dark' 
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                      : 'border-gray-300 dark:border-gray-600'
-                  } shadow-sm`}
+                  className={`p-4 md:p-6 border-2 rounded-xl flex flex-col items-center justify-center ${theme === 'dark'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-300 dark:border-gray-600'
+                    } shadow-sm`}
                 >
                   <Moon className="w-6 h-6 md:w-8 md:h-8 mb-2" />
                   <span className="font-medium text-sm md:text-base">Dark Mode</span>
                 </motion.button>
               </div>
             </div>
-            
+
             {userProfile?.isPremium && (
               <div>
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -676,22 +700,20 @@ export const Settings: React.FC = () => {
                       key={scheme}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`p-3 border-2 rounded-xl text-center ${
-                        appearance.colorScheme === scheme.toLowerCase()
-                          ? 'border-blue-500' 
-                          : 'border-gray-300 dark:border-gray-600'
-                      } shadow-sm`}
+                      className={`p-3 border-2 rounded-xl text-center ${appearance.colorScheme === scheme.toLowerCase()
+                        ? 'border-blue-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                        } shadow-sm`}
                       onClick={() => setAppearance(prev => ({ ...prev, colorScheme: scheme.toLowerCase() }))}
                     >
-                      <div className={`w-full h-12 rounded mb-2 bg-gradient-to-r ${
-                        scheme === 'Ocean' ? 'from-blue-400 to-blue-600' :
+                      <div className={`w-full h-12 rounded mb-2 bg-gradient-to-r ${scheme === 'Ocean' ? 'from-blue-400 to-blue-600' :
                         scheme === 'Forest' ? 'from-green-400 to-green-600' :
-                        scheme === 'Sunset' ? 'from-orange-400 to-red-500' :
-                        scheme === 'Midnight' ? 'from-gray-800 to-black' :
-                        scheme === 'Rose' ? 'from-pink-400 to-rose-500' :
-                        scheme === 'Mint' ? 'from-emerald-400 to-teal-500' :
-                        'from-gray-400 to-gray-600'
-                      }`} />
+                          scheme === 'Sunset' ? 'from-orange-400 to-red-500' :
+                            scheme === 'Midnight' ? 'from-gray-800 to-black' :
+                              scheme === 'Rose' ? 'from-pink-400 to-rose-500' :
+                                scheme === 'Mint' ? 'from-emerald-400 to-teal-500' :
+                                  'from-gray-400 to-gray-600'
+                        }`} />
                       <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                         {scheme}
                       </span>
@@ -700,7 +722,7 @@ export const Settings: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             <div>
               <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Accessibility size={20} />
@@ -726,7 +748,7 @@ export const Settings: React.FC = () => {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -746,7 +768,7 @@ export const Settings: React.FC = () => {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-                
+
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Font Size
@@ -763,7 +785,7 @@ export const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -785,9 +807,8 @@ export const Settings: React.FC = () => {
               </h3>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-2xl font-bold capitalize">{billing.plan}</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  billing.plan === 'premium' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${billing.plan === 'premium' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                  }`}>
                   Active
                 </span>
               </div>
@@ -798,7 +819,7 @@ export const Settings: React.FC = () => {
                 Card ending in {billing.cardLast4}
               </p>
             </div>
-            
+
             {billing.plan !== 'premium' && (
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -811,7 +832,7 @@ export const Settings: React.FC = () => {
                 {loading ? 'Upgrading...' : 'Upgrade to Premium'}
               </motion.button>
             )}
-            
+
             <div className="space-y-4">
               <h3 className="text-base font-semibold text-gray-900 dark:text-white">Billing History</h3>
               <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-center text-gray-500 dark:text-gray-400">
@@ -859,7 +880,7 @@ export const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6">
               <div className="flex items-start mb-4">
                 <Upload className="w-6 h-6 text-green-600 dark:text-green-400 mr-3 mt-1" />
@@ -881,7 +902,7 @@ export const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
               <div className="flex items-start mb-4">
                 <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400 mr-3 mt-1" />
@@ -914,112 +935,172 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-28">
       {/* Mobile Header */}
-      {isMobile && (
-        <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
-          <button 
-            onClick={toggleMobileSidebar}
-            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"
-          >
-            {isMobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            Settings
-          </h1>
-          
-          <button 
+      <div className="lg:hidden sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleSidebar}
+              className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Toggle menu"
+            >
+              <Menu size={20} className="text-gray-700 dark:text-gray-300" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Settings</h1>
+          </div>
+
+          <button
             onClick={handleLogout}
-            className="p-2 rounded-lg text-red-600 dark:text-red-400"
+            className="p-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
           >
             <LogOut size={20} />
           </button>
         </div>
-      )}
+      </div>
 
-      <div className="p-4 sm:p-6 space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
         {/* Desktop Header */}
-        {!isMobile && (
-          <motion.div
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-8"
-          >
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-              Settings
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-              Manage your account preferences and application settings.
-            </p>
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="hidden lg:block mb-8"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl shadow-lg shadow-blue-500/20">
+              <SettingsIcon size={28} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manage your account preferences</p>
+            </div>
+          </div>
+        </motion.div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6 relative">
           {/* Mobile Sidebar Overlay */}
-          {isMobile && isMobileSidebarOpen && (
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-20"
-              onClick={() => setIsMobileSidebarOpen(false)}
-            />
-          )}
+          <AnimatePresence>
+            {isMobile && isSidebarOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                onClick={closeSidebar}
+              />
+            )}
+          </AnimatePresence>
 
           {/* Sidebar */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className={`lg:w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 lg:sticky lg:top-4 h-fit ${
-              isMobile 
-                ? `fixed top-0 left-0 h-full w-64 z-30 transform transition-transform duration-300 ${
-                    isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                  }`
-                : ''
-            }`}
+            ref={sidebarRef}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              transition: { duration: 0.3 }
+            }}
+            className={`
+              lg:w-72 lg:sticky lg:top-4 lg:h-fit
+              ${isMobile ? `
+                fixed top-0 left-0 h-full w-[280px] z-50
+                transform transition-transform duration-300 ease-in-out
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                shadow-2xl
+              ` : ''}
+            `}
           >
-            {isMobile && (
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Settings</h2>
-                <button onClick={() => setIsMobileSidebarOpen(false)}>
-                  <X size={24} />
-                </button>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 h-full overflow-y-auto">
+              {/* Sidebar Header */}
+              <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl">
+                    <SettingsIcon size={18} className="text-white" />
+                  </div>
+                  <span className="font-bold text-gray-900 dark:text-white">Settings</span>
+                </div>
+                {isMobile && (
+                  <button
+                    onClick={closeSidebar}
+                    className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    aria-label="Close sidebar"
+                  >
+                    <X size={20} className="text-gray-500 dark:text-gray-400" />
+                  </button>
+                )}
               </div>
-            )}
-            
-            <nav className="space-y-1">
-              {tabs.map((tab) => (
+
+              {/* User Info */}
+              <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                    {userProfile?.name?.charAt(0) || 'U'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                      {userProfile?.name || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {userProfile?.email || 'user@example.com'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation */}
+              <nav className="p-3 space-y-1">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <motion.button
+                      key={tab.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        if (isMobile) closeSidebar();
+                      }}
+                      className={`
+                        w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                        ${isActive
+                          ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 text-blue-700 dark:text-blue-300 shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                        }
+                      `}
+                    >
+                      <div className={`p-2 rounded-xl ${isActive ? 'bg-gradient-to-r from-blue-500 to-purple-500' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                        <Icon size={18} className={isActive ? 'text-white' : tab.color} />
+                      </div>
+                      <span className="flex-1 text-left">{tab.label}</span>
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeIndicator"
+                          className="w-1.5 h-8 rounded-full bg-gradient-to-b from-blue-500 to-purple-500"
+                          transition={{ type: 'spring', duration: 0.5 }}
+                        />
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </nav>
+
+              {/* Logout Button */}
+              <div className="p-3 border-t border-gray-200/50 dark:border-gray-700/50 mt-auto">
                 <motion.button
-                  key={tab.id}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    if (isMobile) setIsMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center px-4 py-3 rounded-xl text-base font-medium transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 shadow-sm'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 >
-                  <tab.icon size={20} className="mr-3" />
-                  {tab.label}
+                  <div className="p-2 rounded-xl bg-red-50 dark:bg-red-900/20">
+                    <LogOut size={18} />
+                  </div>
+                  <span>Log Out</span>
                 </motion.button>
-              ))}
-            </nav>
-            
-            {!isMobile && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleLogout}
-                className="w-full flex items-center px-4 py-3 rounded-xl text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors mt-6"
-              >
-                <LogOut size={20} className="mr-3" />
-                Log Out
-              </motion.button>
-            )}
+              </div>
+            </div>
           </motion.div>
 
           {/* Content */}
@@ -1028,27 +1109,29 @@ export const Settings: React.FC = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
+            className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6"
           >
             {/* Mobile Tab Header */}
-            {isMobile && (
-              <div className="flex items-center mb-6">
-                <button 
-                  onClick={() => setIsMobileSidebarOpen(true)}
-                  className="p-2 mr-3 rounded-lg bg-gray-100 dark:bg-gray-700"
-                >
-                  <Menu size={20} />
-                </button>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {tabs.find(tab => tab.id === activeTab)?.label}
-                </h2>
-              </div>
-            )}
-            
+            <div className="lg:hidden flex items-center gap-3 mb-6">
+              <button
+                onClick={toggleSidebar}
+                className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                aria-label="Open menu"
+              >
+                <Menu size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {tabs.find(tab => tab.id === activeTab)?.label}
+              </h2>
+            </div>
+
             {renderTabContent()}
           </motion.div>
         </div>
       </div>
+
+      {/* Bottom Bar */}
+      <BottomBar onTaskFormOpen={() => { }} />
     </div>
   );
 };

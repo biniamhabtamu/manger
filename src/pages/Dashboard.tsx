@@ -21,42 +21,58 @@ import {
   Zap,
   BarChart2,
   PieChart,
-  Activity
+  Activity,
+  Home,
+  ListTodo,
+  Users,
+  Settings,
+  Award,
+  Flame,
+  Gift,
+  ArrowRight,
+  Circle,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTasks } from '../hooks/useTasks';
 import { useAuth } from '../contexts/AuthContext';
 import { BottomBar } from '../components/layout/BottomBar';
+import { TaskForm } from '../components/tasks/TaskForm';
 
-// StatCard Component
-const StatCard = ({ title, value, icon: Icon, color, trend, compact = false }) => {
-  const colorMap = {
-    blue: 'from-blue-500 to-blue-600',
-    green: 'from-green-500 to-green-600',
-    yellow: 'from-yellow-500 to-yellow-600',
-    red: 'from-red-500 to-red-600',
-    purple: 'from-purple-500 to-purple-600'
+// Mini Stat Card - Ultra Compact
+const MiniStat = ({ label, value, icon: Icon, color, trend }) => {
+  const colors = {
+    blue: 'bg-blue-500',
+    green: 'bg-emerald-500',
+    yellow: 'bg-amber-500',
+    red: 'bg-rose-500',
+    purple: 'bg-violet-500'
   };
 
   return (
     <motion.div
-      whileHover={{ y: -5 }}
-      className={`bg-gradient-to-br ${colorMap[color]} rounded-2xl p-4 text-white shadow-lg ${compact ? 'h-28' : 'h-32'}`}
+      whileTap={{ scale: 0.95 }}
+      className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-3 border border-gray-100/50 dark:border-gray-700/50 shadow-sm"
     >
-      <div className="flex justify-between items-start">
+      <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm opacity-90">{title}</p>
-          <h3 className={`font-bold ${compact ? 'text-2xl mt-1' : 'text-3xl mt-2'}`}>{value}</h3>
+          <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            {label}
+          </p>
+          <p className="text-xl font-bold text-gray-900 dark:text-white mt-0.5">
+            {value}
+          </p>
         </div>
-        <div className="bg-white/20 p-2 rounded-lg">
-          <Icon size={compact ? 20 : 24} />
+        <div className={`w-8 h-8 rounded-xl ${colors[color]} bg-opacity-10 flex items-center justify-center`}>
+          <Icon size={16} className={`text-${color}-500`} />
         </div>
       </div>
       {trend && (
-        <div className={`flex items-center mt-2 ${compact ? 'text-xs' : 'text-sm'}`}>
-          <TrendingUp size={compact ? 14 : 16} className={trend.isPositive ? 'text-white' : 'text-red-200 rotate-180'} />
-          <span className={`ml-1 ${trend.isPositive ? 'text-white' : 'text-red-200'}`}>
-            {trend.value}% {trend.isPositive ? 'increase' : 'decrease'}
+        <div className="flex items-center gap-1 mt-1">
+          <TrendingUp size={10} className={trend > 0 ? 'text-emerald-500' : 'text-rose-500'} />
+          <span className={`text-[10px] font-medium ${trend > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+            {trend > 0 ? '+' : ''}{trend}%
           </span>
         </div>
       )}
@@ -64,619 +80,432 @@ const StatCard = ({ title, value, icon: Icon, color, trend, compact = false }) =
   );
 };
 
-// TaskCard Component
-const TaskCard = ({ task, index, compact = false }) => {
+// Compact Task Item
+const TaskItem = ({ task, index }) => {
   const priorityColors = {
-    low: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    high: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-    urgent: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+    low: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    high: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    urgent: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
   };
 
   const statusIcons = {
-    'completed': <CheckSquare size={14} className="text-green-500" />,
-    'in-progress': <Clock size={14} className="text-yellow-500" />,
-    'todo': <AlertTriangle size={14} className="text-gray-400" />
+    completed: <CheckCircle size={14} className="text-emerald-500" />,
+    'in-progress': <Clock size={14} className="text-amber-500" />,
+    todo: <Circle size={14} className="text-gray-400" />
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700"
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="flex items-center gap-3 p-3 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
     >
-      <div className="flex justify-between items-start">
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-gray-900 dark:text-white truncate">{task.title}</h4>
-          <div className="flex items-center mt-2 space-x-2">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColors[task.priority]}`}>
-              {task.priority}
+      <div className="flex-shrink-0">
+        {statusIcons[task.status]}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium text-gray-900 dark:text-white truncate ${task.status === 'completed' ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
+          {task.title}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${priorityColors[task.priority]}`}>
+            {task.priority}
+          </span>
+          {task.dueDate && (
+            <span className="text-[10px] text-gray-500 dark:text-gray-400">
+              • {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>
-            {task.dueDate && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                Due: {task.dueDate.toLocaleDateString()}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="pl-2">
-          {statusIcons[task.status]}
+          )}
         </div>
       </div>
-      {!compact && task.description && (
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
-          {task.description}
-        </p>
-      )}
+      <ArrowRight size={14} className="text-gray-400 flex-shrink-0" />
     </motion.div>
   );
 };
 
-// --- NEW Skeleton Components ---
-
-const DashboardSkeleton: React.FC = () => {
-  // Skeleton for a single StatCard
-  const StatCardSkeleton = () => (
-    <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-28 animate-pulse">
-      <div className="flex justify-between items-start">
-        <div className="space-y-2">
-          <div className="h-4 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
-          <div className="h-6 w-16 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-        </div>
-        <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+// Skeleton Loader
+const DashboardSkeleton = () => (
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+    <div className="p-4 space-y-4 max-w-md mx-auto">
+      <div className="animate-pulse">
+        <div className="h-7 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-2"></div>
+        <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
       </div>
+      <div className="grid grid-cols-4 gap-2">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-3 h-20 animate-pulse"></div>
+        ))}
+      </div>
+      <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-24 animate-pulse"></div>
+      <div className="grid grid-cols-4 gap-2">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-xl p-3 h-16 animate-pulse"></div>
+        ))}
+      </div>
+      <div className="space-y-2">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-xl p-3 h-16 animate-pulse"></div>
+        ))}
+      </div>
+      <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-20 animate-pulse"></div>
     </div>
-  );
-
-  // Skeleton for a single TaskCard
-  const TaskCardSkeleton = () => (
-    <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-3 shadow-sm border border-gray-200 dark:border-gray-600 animate-pulse">
-      <div className="flex justify-between items-start">
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="h-4 w-3/4 bg-gray-300 dark:bg-gray-600 rounded"></div>
-          <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-600 rounded"></div>
-        </div>
-        <div className="h-4 w-4 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4 space-y-4 pb-20">
-      {/* Header Skeleton */}
-      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-4 rounded-xl shadow-md">
-        <div className="flex justify-between items-center">
-          <div className="space-y-2">
-            <div className="h-6 w-48 bg-gray-300 dark:bg-gray-600 rounded"></div>
-            <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
-          </div>
-          <div className="flex gap-2">
-            <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse"></div>
-            <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse"></div>
-          </div>
-        </div>
-      </div>
-
-      {/* View Toggle Skeleton */}
-      <div className="flex bg-white dark:bg-gray-800 rounded-xl p-1 shadow-md animate-pulse">
-          <div className="flex-1 py-2 px-4 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-          <div className="flex-1 py-2 px-4 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-          <div className="flex-1 py-2 px-4 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      </div>
-
-      {/* Stats Grid Skeleton */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-      </div>
-
-      {/* Completion Rate Skeleton */}
-      <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-28 animate-pulse">
-        <div className="h-5 w-3/4 bg-gray-300 dark:bg-gray-600 rounded mb-3"></div>
-        <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
-        <div className="bg-gray-300 dark:bg-gray-600 rounded-full h-2"></div>
-      </div>
-
-      {/* Quick Actions Skeleton */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 animate-pulse">
-        <div className="h-5 w-32 bg-gray-200 dark:bg-gray-600 rounded mb-4"></div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-xl h-16"></div>
-          <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-xl h-16"></div>
-        </div>
-      </div>
-
-      {/* Priority Tasks Skeleton */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 animate-pulse">
-        <div className="h-5 w-36 bg-gray-200 dark:bg-gray-600 rounded mb-4"></div>
-        <div className="space-y-3">
-          <TaskCardSkeleton />
-          <TaskCardSkeleton />
-        </div>
-      </div>
-      
-      {/* Motivational Tip Skeleton */}
-      <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-24 animate-pulse">
-        <div className="flex items-center gap-3">
-            <div className="h-5 w-5 rounded-full bg-gray-300 dark:bg-gray-600"></div>
-            <div className="space-y-2">
-                <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                <div className="h-3 w-48 bg-gray-300 dark:bg-gray-600 rounded"></div>
-            </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- END NEW SKELETON COMPONENTS ---
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } },
-};
+  </div>
+);
 
 export const Dashboard: React.FC = () => {
+  // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL, BEFORE ANY CONDITIONAL RETURNS
   const { stats, tasks, loading } = useTasks();
   const { userProfile } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeView, setActiveView] = useState<'overview' | 'recent' | 'upcoming'>('overview');
-  const [showFilters, setShowFilters] = useState(false);
-  const [motivationIndex, setMotivationIndex] = useState(0);
-  
-  // State for the 2-second delay
   const [isDelayedLoading, setIsDelayedLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [motivationIndex, setMotivationIndex] = useState(0);
+  const [showTaskForm, setShowTaskForm] = useState(false);
 
-  // Simulates a minimum loading time for a smoother user experience
+  // All effects must be at the top level
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsDelayedLoading(false);
-    }, 2000); // 2 seconds
-
+    const timer = setTimeout(() => setIsDelayedLoading(false), 1500);
     return () => clearTimeout(timer);
   }, []);
 
-  const motivations = [
-    "The secret of getting ahead is getting started. - Mark Twain",
-    "Productivity is never an accident. It is always the result of a commitment to excellence, intelligent planning, and focused effort. - Paul J. Meyer",
-    "Your time is limited, so don't waste it living someone else's life. - Steve Jobs",
-    "The way to get started is to quit talking and begin doing. - Walt Disney",
-    "It's not about having time, it's about making time.",
-    "Small daily improvements over time lead to stunning results."
-  ];
-
-  const rotateMotivation = () => {
-    setMotivationIndex((prev) => (prev + 1) % motivations.length);
-  };
-
-  // Condition to show the skeleton loader
+  // Now we can use conditional returns AFTER all hooks
   if (loading || isDelayedLoading) {
     return <DashboardSkeleton />;
   }
 
+  // All computed values go after hooks
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
   const weeklyCompletionRate = stats.thisWeekTotal > 0 ? Math.round((stats.thisWeekCompleted / stats.thisWeekTotal) * 100) : 0;
 
-  // Add recent tasks feature
-  const recentTasks = tasks
+  const displayTasks = tasks
     .filter(task => task.title.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0))
     .slice(0, 5);
 
-  // Add upcoming deadlines
-  const upcomingTasks = tasks
-    .filter(task => task.dueDate && task.dueDate > new Date() && task.status !== 'completed')
-    .sort((a, b) => (a.dueDate?.getTime() || 0) - (b.dueDate?.getTime() || 0))
-    .slice(0, 5);
-
-  // Priority tasks (urgent and high priority)
   const priorityTasks = tasks
     .filter(task => (task.priority === 'urgent' || task.priority === 'high') && task.status !== 'completed')
     .slice(0, 3);
 
+  const quickStats = [
+    { label: 'Total', value: stats.total, icon: CheckSquare, color: 'blue', trend: 12 },
+    { label: 'Done', value: stats.completed, icon: Target, color: 'green', trend: 8 },
+    { label: 'Progress', value: stats.inProgress, icon: Clock, color: 'yellow', trend: -5 },
+    { label: 'Overdue', value: stats.overdue, icon: AlertTriangle, color: 'red', trend: -3 },
+  ];
+
+  const greeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const getGreetingEmoji = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return '🌅';
+    if (hour < 17) return '☀️';
+    return '🌙';
+  };
+
+  const motivations = [
+    "✨ Start where you are. Use what you have. Do what you can.",
+    "🔥 Success is the sum of small efforts repeated daily.",
+    "💪 The secret of getting ahead is getting started.",
+    "🎯 Focus on being productive instead of busy.",
+    "🌟 Small daily improvements lead to stunning results."
+  ];
+
+  // Function to handle opening task form
+  const handleOpenTaskForm = () => {
+    setShowTaskForm(true);
+  };
+
+  // Function to handle closing task form
+  const handleCloseTaskForm = () => {
+    setShowTaskForm(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 pb-20">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-4 border-b border-gray-200 dark:border-gray-700"
-      >
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 pb-24">
+      <div className="p-4 space-y-4 max-w-md mx-auto">
+        {/* Header - Compact */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between"
+        >
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Welcome back, {userProfile?.name}!
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Here's your productivity overview
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{getGreetingEmoji()}</span>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                {greeting()}
+              </h1>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              👋 Welcome back, {userProfile?.name || 'Alex'}!
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700"
-              onClick={rotateMotivation}
-              aria-label="Change motivation"
-            >
-              <Lightbulb size={18} className="text-yellow-500" />
-            </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700"
-              onClick={() => setShowFilters(!showFilters)}
-              aria-label="Toggle filters"
-            >
-              <Filter size={18} />
-            </motion.button>
-          </div>
-        </div>
-
-        {/* View Toggle for Mobile */}
-        <div className="flex bg-white dark:bg-gray-800 rounded-xl p-1 shadow-md mt-4">
-          <button
-            onClick={() => setActiveView('overview')}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center space-x-1 ${
-              activeView === 'overview'
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-md flex items-center justify-center border border-gray-100 dark:border-gray-700 relative"
           >
-            <BarChart2 size={16} />
-            <span>Overview</span>
-          </button>
-          <button
-            onClick={() => setActiveView('recent')}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center space-x-1 ${
-              activeView === 'recent'
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <Clock size={16} />
-            <span>Recent</span>
-          </button>
-          <button
-            onClick={() => setActiveView('upcoming')}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center space-x-1 ${
-              activeView === 'upcoming'
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <Calendar size={16} />
-            <span>Upcoming</span>
-          </button>
-        </div>
-      </motion.div>
+            <Bell size={18} className="text-gray-600 dark:text-gray-300" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+          </motion.button>
+        </motion.div>
 
-      <div className="p-4 space-y-4">
-        {/* Filters */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-md overflow-hidden"
-            >
-              <div className="flex flex-wrap gap-3">
-                <div className="flex-1 min-w-[120px]">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                  <select className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm">
-                    <option>All Statuses</option>
-                    <option>To Do</option>
-                    <option>In Progress</option>
-                    <option>Completed</option>
-                  </select>
-                </div>
-                <div className="flex-1 min-w-[120px]">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
-                  <select className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm">
-                    <option>All Priorities</option>
-                    <option>Urgent</option>
-                    <option>High</option>
-                    <option>Medium</option>
-                    <option>Low</option>
-                  </select>
-                </div>
-                <div className="flex-1 min-w-[120px]">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                  <select className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm">
-                    <option>All Categories</option>
-                    <option>Work</option>
-                    <option>Personal</option>
-                    <option>Health</option>
-                    <option>Learning</option>
-                  </select>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Mobile View Content */}
-        <AnimatePresence mode="wait">
-          {activeView === 'overview' && (
-            <motion.div
-              key="overview"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-4"
-            >
-              {/* Stats Grid */}
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-2 gap-3"
-              >
-                <motion.div variants={itemVariants}>
-                  <StatCard
-                    title="Total Tasks"
-                    value={stats.total}
-                    icon={CheckSquare}
-                    color="blue"
-                    trend={{ value: 12, isPositive: true }}
-                    compact
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <StatCard
-                    title="Completed"
-                    value={stats.completed}
-                    icon={Target}
-                    color="green"
-                    trend={{ value: 8, isPositive: true }}
-                    compact
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <StatCard
-                    title="In Progress"
-                    value={stats.inProgress}
-                    icon={Clock}
-                    color="yellow"
-                    trend={{ value: 5, isPositive: false }}
-                    compact
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <StatCard
-                    title="Overdue"
-                    value={stats.overdue}
-                    icon={AlertTriangle}
-                    color="red"
-                    trend={{ value: 3, isPositive: false }}
-                    compact
-                  />
-                </motion.div>
-              </motion.div>
-
-              {/* Completion Rate */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 text-white shadow-lg"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold">Weekly Progress</h3>
-                  <div className="bg-white/20 p-1 rounded">
-                    <TrendingUp size={16} />
-                  </div>
-                </div>
-                <p className="text-blue-100 text-sm mb-2">
-                  Completed {weeklyCompletionRate}% of tasks this week
-                </p>
-                <div className="bg-white/20 rounded-full h-2 mb-2">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${weeklyCompletionRate}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="bg-white rounded-full h-2"
-                  />
-                </div>
-                <p className="text-blue-100 text-xs">
-                  {stats.thisWeekCompleted} of {stats.thisWeekTotal} tasks completed
-                </p>
-              </motion.div>
-
-              {/* Quick Actions */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4"
-              >
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Quick Actions</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <Link to="/tasks/">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-center w-full"
-                    >
-                      <Plus className="w-5 h-5 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
-                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Add Task</span>
-                    </motion.button>
-                  </Link>
-
-                  <Link to="/CalendarPage">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="p-3 bg-green-50 dark:bg-green-900/30 rounded-xl text-center w-full"
-                    >
-                      <Calendar className="w-5 h-5 text-green-600 dark:text-green-400 mx-auto mb-1" />
-                      <span className="text-xs font-medium text-green-600 dark:text-green-400">Calendar</span>
-                    </motion.button>
-                  </Link>
-                </div>
-              </motion.div>
-
-              {/* Priority Tasks */}
-              {priorityTasks.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Priority Tasks</h3>
-                    <Zap size={16} className="text-yellow-500" />
-                  </div>
-                  <div className="space-y-3">
-                    {priorityTasks.map((task, index) => (
-                      <TaskCard key={task.id} task={task} index={index} compact />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
-          )}
-
-          {activeView === 'recent' && (
-            <motion.div
-              key="recent"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4"
-            >
-              <div className="flex flex-col gap-3 mb-3">
-                <h3 className="font-semibold text-gray-900 dark:text-white">Recent Tasks</h3>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search recent tasks..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-              </div>
-              <AnimatePresence>
-                {recentTasks.length === 0 ? (
-                  <div className="text-center py-6 text-gray-500 dark:text-gray-400 text-sm">
-                    No recent tasks found.
-                  </div>
-                ) : (
-                  <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="space-y-3"
-                  >
-                    {recentTasks.map((task, index) => (
-                      <motion.div key={task.id} variants={itemVariants}>
-                        <TaskCard task={task} index={index} compact />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
-
-          {activeView === 'upcoming' && (
-            <motion.div
-              key="upcoming"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4"
-            >
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Upcoming Deadlines</h3>
-              <AnimatePresence>
-                {upcomingTasks.length === 0 ? (
-                  <div className="text-center py-6 text-gray-500 dark:text-gray-400 text-sm">
-                    No upcoming deadlines. Great job!
-                  </div>
-                ) : (
-                  <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="space-y-3"
-                  >
-                    {upcomingTasks.map((task) => (
-                      <motion.li
-                        key={task.id}
-                        variants={itemVariants}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <AlertTriangle className="text-red-500 w-5 h-5" />
-                          <div className="overflow-hidden">
-                            <h4 className="font-medium text-gray-900 dark:text-white text-sm truncate">
-                              {task.title}
-                            </h4>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Due: {task.dueDate?.toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <span className="text-xs font-medium text-red-500 whitespace-nowrap ml-2">
-                          {Math.ceil((task.dueDate!.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}d
-                        </span>
-                      </motion.li>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Motivational Tip */}
+        {/* Stats Grid - Ultra Compact */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg"
-          onClick={rotateMotivation}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-4 gap-2"
         >
-          <div className="flex items-center gap-3">
-            <Sparkles size={20} className="text-white" />
+          {quickStats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <MiniStat {...stat} />
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Progress Ring */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100/50 dark:border-gray-700/50"
+        >
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold mb-1">Daily Motivation</h3>
-              <p className="text-yellow-100 text-sm">
-                {motivations[motivationIndex]}
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Weekly Progress
               </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
+                {weeklyCompletionRate}%
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                {stats.thisWeekCompleted} of {stats.thisWeekTotal} done
+              </p>
+            </div>
+            <div className="relative w-16 h-16">
+              <svg className="w-16 h-16 transform -rotate-90">
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="28"
+                  stroke="#e5e7eb"
+                  strokeWidth="4"
+                  fill="none"
+                  className="dark:stroke-gray-700"
+                />
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="28"
+                  stroke="url(#progressGradient)"
+                  strokeWidth="4"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeDasharray={175.93}
+                  strokeDashoffset={175.93 - (weeklyCompletionRate / 100) * 175.93}
+                />
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#8B5CF6" />
+                    <stop offset="100%" stopColor="#3B82F6" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Flame size={16} className="text-amber-500" />
+              </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Mobile Optimization Notice */}
+        {/* Quick Actions - Compact Grid */}
         <motion.div
-          className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.25 }}
+          className="grid grid-cols-4 gap-2"
         >
-          <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg mr-3">
-            <BarChart3 size={18} className="text-blue-600 dark:text-blue-400" />
+          {/* New Task Button - Now opens TaskForm */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={handleOpenTaskForm}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
+            >
+              <div className="w-8 h-8 rounded-xl bg-violet-500 bg-opacity-10 flex items-center justify-center mx-auto mb-1">
+                <Plus size={16} className="text-violet-500" />
+              </div>
+              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
+                New
+              </p>
+            </motion.button>
+          </motion.div>
+
+          {[
+            { icon: Calendar, label: 'Calendar', to: '/calendarpage', color: 'bg-blue-500' },
+            { icon: BarChart3, label: 'Analytics', to: '/analytics', color: 'bg-emerald-500' },
+            { icon: Trophy, label: 'Goals', to: '/goals', color: 'bg-amber-500' },
+          ].map((item, index) => (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 + (index + 1) * 0.05 }}
+            >
+              <Link to={item.to}>
+                <motion.button
+                  whileTap={{ scale: 0.92 }}
+                  className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
+                >
+                  <div className={`w-8 h-8 rounded-xl ${item.color} bg-opacity-10 flex items-center justify-center mx-auto mb-1`}>
+                    <item.icon size={16} className={`text-${item.color.split('-')[1]}-500`} />
+                  </div>
+                  <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
+                    {item.label}
+                  </p>
+                </motion.button>
+              </Link>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Priority Tasks */}
+        {priorityTasks.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100/50 dark:border-gray-700/50"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                  <Zap size={14} className="text-rose-500" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Priority Tasks
+                </h3>
+              </div>
+              <span className="text-xs font-medium text-rose-500">
+                {priorityTasks.length} urgent
+              </span>
+            </div>
+            <div className="space-y-2">
+              {priorityTasks.map((task, index) => (
+                <TaskItem key={task.id} task={task} index={index} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Recent Tasks */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35 }}
+          className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100/50 dark:border-gray-700/50"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Clock size={14} className="text-blue-500" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                Recent Tasks
+              </h3>
+            </div>
+            <Link to="/tasks" className="text-xs font-medium text-blue-500 flex items-center gap-1">
+              View All <ArrowRight size={12} />
+            </Link>
           </div>
-          <div>
-            <h4 className="text-blue-800 dark:text-blue-200 font-medium text-sm">Mobile Optimized</h4>
-            <p className="text-blue-600 dark:text-blue-300 text-xs mt-1">
-              Swipe between tabs to explore different aspects of your productivity.
-            </p>
+
+          {/* Search */}
+          <div className="relative mb-3">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 border border-gray-100 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="space-y-2">
+            {displayTasks.length === 0 ? (
+              <div className="text-center py-6">
+                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <ListTodo size={20} className="text-gray-400" />
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No tasks yet</p>
+                <button
+                  onClick={handleOpenTaskForm}
+                  className="text-xs text-blue-500 mt-1 inline-block hover:underline"
+                >
+                  Create your first task →
+                </button>
+              </div>
+            ) : (
+              displayTasks.map((task, index) => (
+                <TaskItem key={task.id} task={task} index={index} />
+              ))
+            )}
+          </div>
+        </motion.div>
+
+        {/* Motivation Tip - Compact */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="bg-gradient-to-r from-violet-500 to-blue-500 rounded-2xl p-4 text-white shadow-lg"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Sparkles size={16} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-white/80 uppercase tracking-wider">
+                💡 Daily Motivation
+              </p>
+              <p className="text-sm font-medium mt-0.5 leading-snug">
+                {motivations[motivationIndex % motivations.length]}
+              </p>
+            </div>
+            <button
+              onClick={() => setMotivationIndex(prev => prev + 1)}
+              className="flex-shrink-0 w-6 h-6 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:bg-white/30 transition-colors"
+            >
+              <ArrowRight size={12} className="text-white" />
+            </button>
           </div>
         </motion.div>
       </div>
 
-      <BottomBar />
+      {/* Task Form Modal */}
+      <TaskForm
+        isOpen={showTaskForm}
+        onClose={handleCloseTaskForm}
+      />
+
+      {/* Bottom Bar - Pass the function properly */}
+      <BottomBar onTaskFormOpen={handleOpenTaskForm} />
     </div>
   );
 };

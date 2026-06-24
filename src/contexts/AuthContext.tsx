@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  User, 
-  signInWithEmailAndPassword, 
+import {
+  User,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -34,8 +34,10 @@ interface AuthContextType {
   loading: boolean;
 }
 
+// Create the context
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Make sure useAuth is exported as a named export
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -43,6 +45,9 @@ export const useAuth = () => {
   }
   return context;
 };
+
+// Also export as default for flexibility
+export default useAuth;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -105,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.warn('Failed to save user profile online, storing offline:', error);
     }
-    
+
     offlineStorage.setUserProfile(userProfile);
     setUserProfile(userProfile);
   };
@@ -131,11 +136,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Social login requires an internet connection');
     }
     const { user } = await signInWithPopup(auth, googleProvider);
-    
+
     try {
       const profileRef = doc(db, 'users', user.uid);
       const profileSnap = await getDoc(profileRef);
-      
+
       if (!profileSnap.exists()) {
         await createUserProfile(user);
       }
@@ -150,11 +155,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Social login requires an internet connection');
     }
     const { user } = await signInWithPopup(auth, githubProvider);
-    
+
     try {
       const profileRef = doc(db, 'users', user.uid);
       const profileSnap = await getDoc(profileRef);
-      
+
       if (!profileSnap.exists()) {
         await createUserProfile(user);
       }
@@ -185,3 +190,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+
+// Also export the context if needed
+export { AuthContext };
