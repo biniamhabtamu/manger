@@ -46,8 +46,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
   const formatDate = (d?: string | Date) => {
     if (!d) return '';
     const date = d instanceof Date ? d : new Date(d);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: task.dueDate && new Date(task.dueDate).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
     });
@@ -79,24 +79,24 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return <Zap size={12} className="text-red-500" />;
+        return <Zap size={10} className="text-red-500" />;
       case 'high':
-        return <Flag size={12} className="text-orange-500" />;
+        return <Flag size={10} className="text-orange-500" />;
       case 'medium':
-        return <Target size={12} className="text-yellow-500" />;
+        return <Target size={10} className="text-yellow-500" />;
       default:
-        return <Circle size={12} className="text-gray-500" />;
+        return <Circle size={10} className="text-gray-500" />;
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle size={14} className="text-green-500" />;
+        return <CheckCircle size={12} className="text-green-500" />;
       case 'in-progress':
-        return <Clock size={14} className="text-blue-500" />;
+        return <Clock size={12} className="text-blue-500" />;
       default:
-        return <Circle size={14} className="text-gray-400" />;
+        return <Circle size={12} className="text-gray-400" />;
     }
   };
 
@@ -184,113 +184,103 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
   return (
     <>
       <motion.article
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05 }}
-        className={`group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 transition-all hover:shadow-md relative overflow-hidden w-full ${
-          task.status === 'completed' ? 'opacity-80' : ''
-        }`}
+        transition={{ delay: index * 0.04 }}
+        className={`group bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-3 transition-all hover:shadow-md relative overflow-hidden w-full ${task.status === 'completed' ? 'opacity-75' : ''
+          }`}
         aria-labelledby={`task-${task.id}-title`}
         role="article"
       >
         {/* Favorite indicator */}
         {task.favorite && (
-          <div className="absolute top-2 right-2 text-yellow-400">
-            <Star size={14} fill="currentColor" />
+          <div className="absolute top-1.5 right-1.5 text-yellow-400">
+            <Star size={12} fill="currentColor" />
           </div>
         )}
 
-        <div className="flex items-start gap-3 w-full">
-          {/* status toggle */}
+        <div className="flex items-start gap-2.5 w-full">
+          {/* status toggle - smaller */}
           <motion.button
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.92 }}
             onClick={handleStatusToggle}
             disabled={loading}
             aria-pressed={task.status === 'completed'}
             title={task.status === 'completed' ? 'Mark as Todo' : 'Mark as Completed'}
-            className={`flex-shrink-0 mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-              task.status === 'completed'
+            className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${task.status === 'completed'
                 ? 'bg-green-500 border-green-500 text-white'
                 : 'border-gray-300 dark:border-gray-600 hover:border-green-500'
-            }`}
+              }`}
           >
-            {task.status === 'completed' && <CheckSquare size={12} />}
+            {task.status === 'completed' && <CheckSquare size={10} />}
           </motion.button>
 
           <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-start gap-2">
+            <div className="flex justify-between items-start gap-1.5">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3
-                    id={`task-${task.id}-title`}
-                    className={`text-base font-semibold leading-tight break-words ${
-                      task.status === 'completed'
-                        ? 'text-gray-500 dark:text-gray-400 line-through'
-                        : 'text-gray-900 dark:text-white'
+                {/* Title - smaller */}
+                <h3
+                  id={`task-${task.id}-title`}
+                  className={`text-sm font-semibold leading-tight break-words ${task.status === 'completed'
+                      ? 'text-gray-500 dark:text-gray-400 line-through'
+                      : 'text-gray-900 dark:text-white'
                     }`}
-                  >
-                    {task.title}
-                  </h3>
-                </div>
+                >
+                  {task.title}
+                </h3>
 
-                {/* badges */}
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                {/* Badges - more compact */}
+                <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                     {getStatusIcon(task.status)}
                     <span className="capitalize">{task.status.replace('-', ' ')}</span>
                   </span>
 
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                     {getPriorityIcon(task.priority)}
                     <span className="capitalize">{task.priority}</span>
                   </span>
 
                   {task.dueDate && (
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${getUrgencyClass(
+                      className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${getUrgencyClass(
                         daysLeft
                       )}`}
                     >
-                      <Calendar size={12} />
+                      <Calendar size={10} />
                       {formatDate(task.dueDate)}
-                      {daysLeft !== null && daysLeft < 0 && (
-                        <span> • {Math.abs(daysLeft)}d ago</span>
-                      )}
-                      {daysLeft !== null && daysLeft >= 0 && (
-                        <span> • {daysLeft}d left</span>
-                      )}
                     </span>
                   )}
                 </div>
 
-                {/* Description with expand/collapse */}
+                {/* Description with expand/collapse - more compact */}
                 {task.description && (
-                  <div className="mb-2">
-                    <button 
+                  <div className="mt-1.5">
+                    <button
                       onClick={toggleExpand}
-                      className="flex items-center text-sm text-gray-600 dark:text-gray-400"
+                      className="flex items-center text-[11px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                     >
                       {expanded ? (
                         <>
-                          <ChevronUp size={14} className="mr-1" />
-                          Hide details
+                          <ChevronUp size={12} className="mr-0.5" />
+                          Less
                         </>
                       ) : (
                         <>
-                          <ChevronDown size={14} className="mr-1" />
-                          Show details
+                          <ChevronDown size={12} className="mr-0.5" />
+                          More
                         </>
                       )}
                     </button>
-                    
+
                     <AnimatePresence>
                       {expanded && (
-                        <motion.p 
+                        <motion.p
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="text-sm mt-1 text-gray-600 dark:text-gray-300 break-words whitespace-pre-line"
+                          className="text-[11px] mt-1 text-gray-600 dark:text-gray-300 break-words whitespace-pre-line"
                         >
                           {task.description}
                         </motion.p>
@@ -299,122 +289,122 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
                   </div>
                 )}
 
-                {/* tags */}
+                {/* Tags - more compact */}
                 {task.tags?.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {task.tags.slice(0, 3).map((tag, i) => (
-                      <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-                        <Tag size={10} />
+                  <div className="flex flex-wrap gap-0.5 mt-1.5">
+                    {task.tags.slice(0, 2).map((tag, i) => (
+                      <span key={i} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                        <Tag size={8} />
                         {tag}
                       </span>
                     ))}
-                    {task.tags.length > 3 && (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        +{task.tags.length - 3} more
+                    {task.tags.length > 2 && (
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                        +{task.tags.length - 2}
                       </span>
                     )}
                   </div>
                 )}
 
-                {/* subtasks progress */}
+                {/* Subtasks progress - more compact */}
                 {subtaskProgress !== null && (
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between text-xs mb-1">
+                  <div className="mt-1.5">
+                    <div className="flex items-center justify-between text-[10px]">
                       <span className="text-gray-600 dark:text-gray-300">
-                        Subtasks progress
+                        Progress
                       </span>
                       <span className="text-gray-500 dark:text-gray-400">
                         {subtaskProgress}%
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-0.5">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${subtaskProgress}%` }}
-                        className="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                        className="h-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
                       />
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* right controls */}
-              <div className="flex flex-col items-end gap-1">
+              {/* Right controls - more compact */}
+              <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                 <button
                   onClick={toggleFavorite}
                   disabled={loading}
                   title={task.favorite ? 'Unfavorite' : 'Mark favorite'}
-                  className={`p-1.5 rounded-md transition-colors ${
-                    task.favorite 
-                      ? 'text-yellow-500 bg-yellow-100 dark:bg-yellow-900/30' 
+                  className={`p-1 rounded-md transition-colors ${task.favorite
+                      ? 'text-yellow-500 bg-yellow-100 dark:bg-yellow-900/30'
                       : 'text-gray-400 hover:text-yellow-500 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
+                    }`}
                   aria-label="toggle favorite"
                 >
-                  <Star size={16} fill={task.favorite ? "currentColor" : "none"} />
+                  <Star size={13} fill={task.favorite ? "currentColor" : "none"} />
                 </button>
 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.92 }}
                   onClick={() => setShowMenu((s) => !s)}
-                  className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   aria-haspopup="true"
                   aria-expanded={showMenu}
                 >
-                  <MoreVertical size={16} />
+                  <MoreVertical size={14} />
                 </motion.button>
               </div>
             </div>
 
-            {/* Additional info row */}
-            <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
-              <div className="flex items-center gap-2">
+            {/* Additional info row - more compact */}
+            <div className="flex items-center justify-between mt-1.5 text-[10px] text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1.5">
                 {task.assignee && (
-                  <span className="inline-flex items-center gap-1">
-                    <User size={12} />
+                  <span className="inline-flex items-center gap-0.5">
+                    <User size={10} />
                     {task.assignee.name}
                   </span>
                 )}
-                
+
                 {task.estimate && (
-                  <span className="inline-flex items-center gap-1">
-                    <Clock size={12} />
+                  <span className="inline-flex items-center gap-0.5">
+                    <Clock size={10} />
                     {task.estimate}h
                   </span>
                 )}
-                
+
                 {task.category && (
-                  <span className="inline-flex items-center gap-1 capitalize">
-                    <Sparkles size={12} />
+                  <span className="inline-flex items-center gap-0.5 capitalize">
+                    <Sparkles size={10} />
                     {task.category.replace('-', ' ')}
                   </span>
                 )}
               </div>
-              
-              <div className="text-xs">
+
+              <div className="text-[10px]">
                 {new Date(task.createdAt).toLocaleDateString()}
               </div>
             </div>
           </div>
         </div>
 
-        {/* menu */}
+        {/* Menu - more compact */}
         <AnimatePresence>
           {showMenu && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -6 }}
+              initial={{ opacity: 0, scale: 0.95, y: -4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -6 }}
-              className="absolute right-3 top-12 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-44 overflow-hidden"
+              exit={{ opacity: 0, scale: 0.95, y: -4 }}
+              className="absolute right-1.5 top-10 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-40 overflow-hidden"
             >
               <button
                 onClick={() => {
                   setShowEditForm(true);
                   setShowMenu(false);
                 }}
-                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
-                <Edit3 size={16} /> Edit Task
+                <Edit3 size={13} /> Edit Task
               </button>
 
               <button
@@ -422,9 +412,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
                   copyTaskToClipboard();
                   setShowMenu(false);
                 }}
-                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
-                <Copy size={16} /> Copy JSON
+                <Copy size={13} /> Copy JSON
               </button>
 
               <button
@@ -432,9 +422,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
                   snoozeOneDay();
                   setShowMenu(false);
                 }}
-                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
-                <Clock size={16} /> Snooze 1 Day
+                <Clock size={13} /> Snooze 1 Day
               </button>
 
               <button
@@ -447,9 +437,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
                     }
                   }, 150);
                 }}
-                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
-                <BellRing size={16} /> Set Reminder
+                <BellRing size={13} /> Set Reminder
               </button>
 
               <button
@@ -458,15 +448,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
                   setShowDeleteConfirm(true);
                 }}
                 disabled={loading}
-                className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 transition-colors"
+                className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 transition-colors"
               >
-                <Trash2 size={16} /> Delete Task
+                <Trash2 size={13} /> Delete Task
               </button>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* click outside */}
+        {/* Click outside */}
         {showMenu && (
           <button
             aria-hidden
@@ -476,45 +466,48 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
         )}
       </motion.article>
 
-      {/* Beautiful Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal - more compact */}
       <AnimatePresence>
         {showDeleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-xl"
+              exit={{ opacity: 0, scale: 0.92 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-5 max-w-sm w-full shadow-xl"
             >
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertTriangle className="text-red-500" size={32} />
+              <div className="text-center mb-5">
+                <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <AlertTriangle className="text-red-500" size={28} />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1.5">
                   Delete Task?
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Are you sure you want to delete "{task.title}"? This action cannot be undone.
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Are you sure you want to delete "<span className="font-medium">{task.title}</span>"?
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  This action cannot be undone.
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2.5">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
                   disabled={loading}
-                  className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                  className="flex-1 py-2.5 px-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={loading}
-                  className="flex-1 py-3 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center"
+                  className="flex-1 py-2.5 px-3 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center"
                 >
                   {loading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    'Delete Task'
+                    'Delete'
                   )}
                 </button>
               </div>

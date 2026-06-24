@@ -4,7 +4,11 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { Layout } from './components/layout/Layout';
+// Fix: Import Layout as default since it's exported that way
+import Layout from './components/layout/Layout';
+// OR keep both imports if needed:
+// import { Layout } from './components/layout/Layout';
+// import Layout from './components/layout/Layout';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
@@ -50,9 +54,11 @@ const AppBackHandler = () => {
         if (currentTime - lastBackPressRef.current < DOUBLE_PRESS_DELAY) {
           CapacitorApp.exitApp().catch(console.error);
         } else {
-          window.Toaster?.show({
-            message: 'Press back again to exit',
+          // Use toast from react-hot-toast instead
+          const toast = require('react-hot-toast').default;
+          toast('Press back again to exit', {
             duration: 2000,
+            icon: '👋',
           });
           lastBackPressRef.current = currentTime;
         }
@@ -94,7 +100,7 @@ function App() {
         <Router>
           <div className="App">
             <OfflineIndicator />
-            <Toaster 
+            <Toaster
               position="top-center"
               toastOptions={{
                 duration: 2000,
@@ -107,9 +113,9 @@ function App() {
               }}
               ref={(ref) => { window.Toaster = ref; }}
             />
-            
+
             {isNativePlatform && <AppBackHandler />}
-            
+
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
@@ -204,7 +210,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              
+
               <Route
                 path="*"
                 element={
