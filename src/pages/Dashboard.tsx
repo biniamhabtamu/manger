@@ -32,7 +32,8 @@ import {
   ArrowRight,
   Circle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Target as TargetIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTasks } from '../hooks/useTasks';
@@ -357,32 +358,68 @@ export const Dashboard: React.FC = () => {
             </motion.button>
           </motion.div>
 
-          {[
-            { icon: Calendar, label: 'Calendar', to: '/calendarpage', color: 'bg-blue-500' },
-            { icon: BarChart3, label: 'Analytics', to: '/analytics', color: 'bg-emerald-500' },
-            { icon: Trophy, label: 'Goals', to: '/goals', color: 'bg-amber-500' },
-          ].map((item, index) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 + (index + 1) * 0.05 }}
-            >
-              <Link to={item.to}>
-                <motion.button
-                  whileTap={{ scale: 0.92 }}
-                  className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
-                >
-                  <div className={`w-8 h-8 rounded-xl ${item.color} bg-opacity-10 flex items-center justify-center mx-auto mb-1`}>
-                    <item.icon size={16} className={`text-${item.color.split('-')[1]}-500`} />
-                  </div>
-                  <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
-                    {item.label}
-                  </p>
-                </motion.button>
-              </Link>
-            </motion.div>
-          ))}
+          {/* Calendar Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Link to="/calendarpage">
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 rounded-xl bg-blue-500 bg-opacity-10 flex items-center justify-center mx-auto mb-1">
+                  <Calendar size={16} className="text-blue-500" />
+                </div>
+                <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
+                  Calendar
+                </p>
+              </motion.button>
+            </Link>
+          </motion.div>
+
+          {/* Analytics Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <Link to="/analytics">
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 rounded-xl bg-emerald-500 bg-opacity-10 flex items-center justify-center mx-auto mb-1">
+                  <BarChart3 size={16} className="text-emerald-500" />
+                </div>
+                <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
+                  Analytics
+                </p>
+              </motion.button>
+            </Link>
+          </motion.div>
+
+          {/* Habits Button - NEW */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Link to="/habits">
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 rounded-xl bg-purple-500 bg-opacity-10 flex items-center justify-center mx-auto mb-1">
+                  <TargetIcon size={16} className="text-purple-500" />
+                </div>
+                <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
+                  Habits
+                </p>
+              </motion.button>
+            </Link>
+          </motion.div>
         </motion.div>
 
         {/* Priority Tasks */}
