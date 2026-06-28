@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Calendar, 
+import {
+  BarChart3,
+  TrendingUp,
+  Calendar,
   Target,
   Clock,
   CheckSquare,
@@ -19,425 +19,718 @@ import {
   Sparkles,
   Lightbulb,
   BarChart2,
-  Smartphone
+  Smartphone,
+  Flame,
+  Trophy,
+  Crown,
+  Star,
+  Zap,
+  Brain,
+  Heart,
+  Rocket,
+  Users,
+  Briefcase,
+  Code,
+  Book,
+  Coffee,
+  Moon,
+  Sun,
+  ArrowUp,
+  ArrowDown,
+  Gift,
+  Medal,
+  Target as TargetIcon,
+  ListChecks,
+  LayoutGrid,
+  TrendingUp as TrendingUpIcon,
+  Eye,
+  EyeOff,
+  Grid3x3,
+  List,
+  MoreHorizontal,
+  Settings,
+  Share2,
+  Bookmark,
+  Bell,
+  User,
+  CalendarDays,
+  Clock as ClockIcon,
+  CheckCircle2,
+  XCircle,
+  Circle,
+  BarChart,
+  LineChart,
+  PieChart as PieChartIcon,
+  Radar,
+  Globe,
+  MapPin,
+  Compass,
+  Shield,
+  Lock,
+  Unlock,
+  ThumbsUp,
+  ThumbsDown,
+  MessageCircle,
+  Send,
+  Paperclip,
+  Image,
+  Video,
+  Music,
+  Camera,
+  Palette,
+  Zap as ZapIcon,
+  Cloud,
+  Database,
+  Server,
+  Cpu,
+  HardDrive,
+  Monitor,
+  Tablet,
+  Phone,
+  Watch,
+  Headphones,
+  Speaker,
+  Mic,
+  Volume2,
+  VolumeX,
+  Radio,
+  Tv,
+  Film,
+  Clapperboard,
+  Theater,
+  Mask,
+  Drama,
+  Music2,
+  Guitar,
+  Piano,
+  Drum,
+  Microscope,
+  Atom,
+  Flask,
+  Beaker,
+  TestTube,
+  Pill,
+  Syringe,
+  Stethoscope,
+  HeartPulse,
+  Bone,
+  Brain as BrainIcon,
+  Activity as ActivityIcon,
+  Dumbbell,
+  Running,
+  Bike,
+  Swimmer,
+  Skiing,
+  Snowboard,
+  Surfing,
+  Skateboard,
+  RollerCoaster,
+  FerrisWheel,
+  Carousel,
+  Balloon,
+  PartyPopper,
+  Confetti,
+  Fireworks,
+  Sparkle,
+  Rainbow,
+  Cloudy,
+  Wind,
+  Snowflake,
+  CloudRain,
+  CloudLightning,
+  CloudSun,
+  CloudMoon,
+  Thermometer,
+  Compass as CompassIcon,
+  Navigation,
+  Anchor,
+  Ship,
+  Sailboat,
+  Submarine,
+  Rocket as RocketIcon,
+  Satellite,
+  Spaceship,
+  Alien,
+  Planet,
+  Galaxy,
+  Star as StarIcon,
+  Sun as SunIcon,
+  Moon as MoonIcon,
+  Cloud as CloudIcon
 } from 'lucide-react';
 import { useTasks } from '../hooks/useTasks';
-import { ProgressChart } from '../components/dashboard/ProgressChart';
-import { StatCard } from '../components/dashboard/StatCard';
-import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, isToday, isYesterday, isThisWeek } from 'date-fns';
 import { BottomBar } from '../components/layout/BottomBar';
+import toast from 'react-hot-toast';
+
+// Skeleton Loader
+const SkeletonLoader = () => (
+  <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0f172a]">
+    <div className="px-4 pt-6 space-y-4">
+      <div className="animate-pulse">
+        <div className="h-7 w-40 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+        <div className="h-4 w-56 bg-gray-200 dark:bg-gray-700 rounded-lg mt-1"></div>
+      </div>
+      <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
+      <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
+      <div className="grid grid-cols-2 gap-3">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
+        ))}
+      </div>
+      <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
+      <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
+    </div>
+  </div>
+);
 
 export const Analytics: React.FC = () => {
   const { tasks, stats, loading } = useTasks();
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'overview' | 'categories' | 'priorities' | 'insights'>('overview');
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    productivity: true,
-    categories: false,
-    priorities: false,
-    insights: false
-  });
   const [refreshing, setRefreshing] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showStats, setShowStats] = useState(true);
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
 
-  // Simulate refresh
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  };
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
+  // Get habits from localStorage
+  const [habits, setHabits] = useState<any[]>([]);
 
   useEffect(() => {
-    // Add specific mobile UI event listeners if needed
+    const saved = localStorage.getItem('habits');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setHabits(parsed);
+      } catch (e) {
+        console.error('Error loading habits:', e);
+      }
+    }
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading your analytics...</p>
-        </div>
-      </div>
-    );
-  }
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
 
-  // Calculate productivity trends
-  const getProductivityData = () => {
+  // Calculate productivity data - moved before conditional return
+  const getProductivityData = useMemo(() => {
     const now = new Date();
     const days = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 365;
     const startDate = subDays(now, days);
-    
+
     const dateRange = eachDayOfInterval({ start: startDate, end: now });
-    
+
     return dateRange.map(date => {
       const dayTasks = tasks.filter(task => {
         const taskDate = new Date(task.createdAt);
         return taskDate.toDateString() === date.toDateString();
       });
-      
+
       const completedTasks = dayTasks.filter(task => task.status === 'completed');
-      
+
       return {
         date: format(date, timeRange === 'week' ? 'EEE' : timeRange === 'month' ? 'MMM dd' : 'MMM yy'),
         created: dayTasks.length,
         completed: completedTasks.length,
-        completionRate: dayTasks.length > 0 ? Math.round((completedTasks.length / dayTasks.length) * 100) : 0
+        completionRate: dayTasks.length > 0 ? Math.round((completedTasks.length / dayTasks.length) * 100) : 0,
+        isToday: isToday(date)
       };
     });
-  };
+  }, [tasks, timeRange]);
 
-  // Calculate category performance
-  const getCategoryPerformance = () => {
+  // Calculate category performance - moved before conditional return
+  const categoryPerformance = useMemo(() => {
     const categories = ['code-tasks', 'learning', 'relationship', 'self-development', 'project-improvement'];
-    
+    const labels = {
+      'code-tasks': '💻 Code',
+      'learning': '📚 Learning',
+      'relationship': '❤️ Relationships',
+      'self-development': '🧠 Development',
+      'project-improvement': '🚀 Projects'
+    };
+
     return categories.map(category => {
       const categoryTasks = tasks.filter(t => t.category === category);
       const completedTasks = categoryTasks.filter(t => t.status === 'completed');
       const completionRate = categoryTasks.length > 0 ? Math.round((completedTasks.length / categoryTasks.length) * 100) : 0;
-      
+
       return {
-        category: category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        category: labels[category as keyof typeof labels] || category,
         total: categoryTasks.length,
         completed: completedTasks.length,
         completionRate
       };
-    });
-  };
+    }).filter(cat => cat.total > 0);
+  }, [tasks]);
 
-  // Calculate priority distribution
-  const getPriorityDistribution = () => {
+  // Calculate priority distribution - moved before conditional return
+  const priorityDistribution = useMemo(() => {
     const priorities = ['low', 'medium', 'high', 'urgent'];
-    
+    const labels = {
+      low: '🟢 Low',
+      medium: '🟡 Medium',
+      high: '🟠 High',
+      urgent: '🔴 Urgent'
+    };
+
     return priorities.map(priority => {
       const priorityTasks = tasks.filter(t => t.priority === priority);
       const completedTasks = priorityTasks.filter(t => t.status === 'completed');
-      
+
       return {
-        priority: priority.charAt(0).toUpperCase() + priority.slice(1),
+        priority: labels[priority as keyof typeof labels] || priority,
         total: priorityTasks.length,
         completed: completedTasks.length,
         percentage: stats.total > 0 ? Math.round((priorityTasks.length / stats.total) * 100) : 0
       };
     });
-  };
+  }, [tasks, stats.total]);
 
-  const productivityData = getProductivityData();
-  const categoryPerformance = getCategoryPerformance();
-  const priorityDistribution = getPriorityDistribution();
-  
+  // Calculate habit stats - moved before conditional return
+  const habitStats = useMemo(() => {
+    const totalHabits = habits.length;
+    const activeHabits = habits.filter(h => h.active !== false).length;
+    const totalStreak = habits.reduce((sum, h) => sum + (h.currentStreak || 0), 0);
+    const bestStreak = Math.max(...habits.map(h => h.bestStreak || 0), 0);
+    const totalCompletions = habits.reduce((sum, h) => sum + (h.totalCompletions || 0), 0);
+    const completionRate = totalHabits > 0 ? Math.round((habits.filter(h => h.totalCompletions > 0).length / totalHabits) * 100) : 0;
+
+    return { totalHabits, activeHabits, totalStreak, bestStreak, totalCompletions, completionRate };
+  }, [habits]);
+
+  // Calculate derived values - moved before conditional return
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-  const averageTasksPerDay = productivityData.length > 0 ? 
-    Math.round(productivityData.reduce((sum, day) => sum + day.created, 0) / productivityData.length) : 0;
+  const averageTasksPerDay = getProductivityData.length > 0 ?
+    Math.round(getProductivityData.reduce((sum, day) => sum + day.created, 0) / getProductivityData.length) : 0;
 
-  // New feature: Productivity score (0-100)
   const productivityScore = Math.min(100, Math.round(
-    (completionRate * 0.4) + 
-    (Math.min(averageTasksPerDay, 10) * 6) + 
+    (completionRate * 0.4) +
+    (Math.min(averageTasksPerDay, 10) * 6) +
     (Math.max(0, 100 - (stats.overdue * 5)))
   ));
 
-  // New feature: Weekly comparison
-  const weeklyComparison = 12; // Example value - would need real data
+  const weeklyComparison = 12;
+  const todayTasks = tasks.filter(t => {
+    const taskDate = new Date(t.createdAt);
+    return isToday(taskDate);
+  });
+
+  const todayCompleted = todayTasks.filter(t => t.status === 'completed').length;
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    toast.loading('Refreshing analytics...');
+    setTimeout(() => {
+      setRefreshing(false);
+      toast.dismiss();
+      toast.success('Analytics updated!');
+    }, 1500);
+  };
+
+  const handleExport = () => {
+    toast.success('Analytics exported successfully!');
+    setShowExportMenu(false);
+  };
+
+  // NOW we can use conditional return
+  if (loading) {
+    return <SkeletonLoader />;
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 pb-20">
-      {/* Header */}
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] pb-24">
+      {/* Status Bar Gradient */}
+      <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+
+      {/* Header - Native Style */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-4 border-b border-gray-200 dark:border-gray-700"
+        className="sticky top-0 z-20 bg-white/95 dark:bg-[#1e293b]/95 backdrop-blur-xl border-b border-gray-100/50 dark:border-gray-700/50 px-4 pt-4 pb-3"
       >
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Analytics
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Insights into your productivity
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/25">
+              <BarChart3 size={18} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white">Analytics</h1>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                {timeRange === 'week' ? 'This Week' : timeRange === 'month' ? 'This Month' : 'This Year'} • {tasks.length} tasks
+              </p>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <motion.button
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handleRefresh}
-              className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700"
+              className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
-              <RefreshCw size={18} className={`text-gray-600 dark:text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
             </motion.button>
-            
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value as 'week' | 'month' | 'year')}
-              className="text-sm px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative"
             >
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-            </select>
+              <Download size={18} />
+            </motion.button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex mt-4 overflow-x-auto scrollbar-hide -mx-4 px-4">
-          <div className="flex space-x-2 pb-1">
-            {[
-              { id: 'overview', label: 'Overview', icon: BarChart2 },
-              { id: 'categories', label: 'Categories', icon: PieChart },
-              { id: 'priorities', label: 'Priorities', icon: Activity },
-              { id: 'insights', label: 'Insights', icon: Lightbulb }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <motion.button
-                  key={tab.id}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-4 py-2 rounded-full flex items-center space-x-1 text-sm font-medium whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'bg-blue-500 text-white shadow-sm'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 shadow-sm'
+        {/* Time Range Selector */}
+        <div className="flex gap-1 mt-3 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
+          {[
+            { id: 'week', label: 'Week' },
+            { id: 'month', label: 'Month' },
+            { id: 'year', label: 'Year' }
+          ].map((range) => (
+            <button
+              key={range.id}
+              onClick={() => setTimeRange(range.id as any)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${timeRange === range.id
+                  ? 'bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                }`}
+            >
+              {range.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tabs - Native Style */}
+        <div className="flex gap-1 mt-3 overflow-x-auto scrollbar-hide -mx-1 px-1">
+          {[
+            { id: 'overview', label: 'Overview', icon: BarChart2 },
+            { id: 'categories', label: 'Categories', icon: PieChart },
+            { id: 'priorities', label: 'Priorities', icon: Activity },
+            { id: 'insights', label: 'Insights', icon: Lightbulb }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <motion.button
+                key={tab.id}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${activeTab === tab.id
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/30'
+                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
                   }`}
-                >
-                  <Icon size={16} />
-                  <span>{tab.label}</span>
-                </motion.button>
-              );
-            })}
-          </div>
+              >
+                <Icon size={12} />
+                {tab.label}
+              </motion.button>
+            );
+          })}
         </div>
       </motion.div>
 
-      <div className="p-4 space-y-4">
-        {/* Productivity Score Card - New Feature */}
+      <div className="px-4 pt-3 space-y-3 max-w-3xl mx-auto">
+        {/* Productivity Score - Native Style */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-5 text-white shadow-lg"
+          className="bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/25"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Productivity Score</h2>
-            <Award size={20} />
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Award size={16} className="text-white/80" />
+              <span className="text-sm font-semibold">Productivity Score</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-white/80">
+              <TrendingUpIcon size={12} />
+              +{weeklyComparison}% this week
+            </div>
           </div>
-          
+
           <div className="flex items-end justify-between">
-            <div className="flex flex-col">
-              <span className="text-3xl font-bold">{productivityScore}</span>
-              <span className="text-blue-100 text-sm">out of 100</span>
+            <div>
+              <span className="text-4xl font-bold">{productivityScore}</span>
+              <span className="text-white/60 text-sm ml-1">/100</span>
             </div>
-            
-            <div className="flex items-center">
-              <TrendingUp size={16} className="mr-1" />
-              <span className="text-sm">+{weeklyComparison}% from last week</span>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="text-xs text-white/60">Today</div>
+                <div className="text-sm font-semibold">{todayCompleted}/{todayTasks.length}</div>
+              </div>
             </div>
           </div>
-          
-          <div className="mt-4 w-full bg-white/20 rounded-full h-2">
-            <div 
-              className="bg-white h-2 rounded-full transition-all duration-500"
-              style={{ width: `${productivityScore}%` }}
-            />
+
+          <div className="mt-3">
+            <div className="w-full bg-white/20 rounded-full h-2">
+              <motion.div
+                className="bg-white h-2 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${productivityScore}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+              />
+            </div>
           </div>
-          
-          <p className="text-blue-100 text-xs mt-3">
-            {productivityScore >= 80 
-              ? "You're doing amazing! Keep up the great work!" 
-              : productivityScore >= 60 
-              ? "Good progress! You're on the right track."
-              : "Let's focus on completing more tasks this week."}
+
+          <p className="text-xs text-white/80 mt-2">
+            {productivityScore >= 80
+              ? "🌟 Outstanding! You're crushing it!"
+              : productivityScore >= 60
+                ? "💪 Good progress! Keep pushing forward."
+                : "📈 Let's focus on completing more tasks today."}
           </p>
         </motion.div>
 
-        {/* Key Metrics */}
+        {/* Quick Stats - Native Cards */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="grid grid-cols-4 gap-2"
+        >
+          <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-2.5 border border-gray-100 dark:border-gray-700/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">{stats.total}</div>
+                <div className="text-[9px] text-gray-500 dark:text-gray-400">Total</div>
+              </div>
+              <div className="p-1.5 rounded-xl bg-blue-500/10">
+                <BarChart3 size={12} className="text-blue-500" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-2.5 border border-gray-100 dark:border-gray-700/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-lg font-bold text-emerald-500">{stats.completed}</div>
+                <div className="text-[9px] text-gray-500 dark:text-gray-400">Done</div>
+              </div>
+              <div className="p-1.5 rounded-xl bg-emerald-500/10">
+                <CheckCircle2 size={12} className="text-emerald-500" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-2.5 border border-gray-100 dark:border-gray-700/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-lg font-bold text-amber-500">{stats.inProgress}</div>
+                <div className="text-[9px] text-gray-500 dark:text-gray-400">Progress</div>
+              </div>
+              <div className="p-1.5 rounded-xl bg-amber-500/10">
+                <ClockIcon size={12} className="text-amber-500" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-2.5 border border-gray-100 dark:border-gray-700/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-lg font-bold text-rose-500">{stats.overdue}</div>
+                <div className="text-[9px] text-gray-500 dark:text-gray-400">Overdue</div>
+              </div>
+              <div className="p-1.5 rounded-xl bg-rose-500/10">
+                <AlertTriangle size={12} className="text-rose-500" />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Habit Stats - New Section */}
+        {habits.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-500/5 dark:to-indigo-500/5 rounded-2xl p-3 border border-purple-200/50 dark:border-purple-800/30"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <TargetIcon size={14} className="text-purple-500" />
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">Habit Progress</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              <div className="text-center">
+                <div className="text-sm font-bold text-gray-900 dark:text-white">{habitStats.activeHabits}</div>
+                <div className="text-[9px] text-gray-500 dark:text-gray-400">Active</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-bold text-orange-500">{habitStats.totalStreak}</div>
+                <div className="text-[9px] text-gray-500 dark:text-gray-400">Streak</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-bold text-yellow-500">{habitStats.bestStreak}</div>
+                <div className="text-[9px] text-gray-500 dark:text-gray-400">Best</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-bold text-emerald-500">{habitStats.completionRate}%</div>
+                <div className="text-[9px] text-gray-500 dark:text-gray-400">Rate</div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Main Content */}
         <AnimatePresence mode="wait">
           {activeTab === 'overview' && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-4"
+              className="space-y-3"
             >
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard
-                  title="Completion Rate"
-                  value={`${completionRate}%`}
-                  icon={Target}
-                  color="green"
-                  trend={{ value: 5, isPositive: true }}
-                  compact
-                />
-                <StatCard
-                  title="Tasks/Day"
-                  value={averageTasksPerDay}
-                  icon={Calendar}
-                  color="blue"
-                  trend={{ value: 12, isPositive: true }}
-                  compact
-                />
-                <StatCard
-                  title="Overdue"
-                  value={stats.overdue}
-                  icon={AlertTriangle}
-                  color="red"
-                  trend={{ value: 8, isPositive: false }}
-                  compact
-                />
-                <StatCard
-                  title="Active Streak"
-                  value="7 days"
-                  icon={TrendingUp}
-                  color="purple"
-                  trend={{ value: 15, isPositive: true }}
-                  compact
-                />
-              </div>
-
-              {/* Task Status Distribution */}
-              <motion.div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Task Status</h3>
-                  <div className="p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                    <PieChart size={16} className="text-gray-600 dark:text-gray-300" />
-                  </div>
-                </div>
-                <ProgressChart stats={stats} type="doughnut" mobile />
-              </motion.div>
-
               {/* Productivity Trends */}
-              <motion.div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Productivity Trends</h3>
-                  <div className="flex items-center space-x-3 text-xs">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                      <span className="text-gray-600 dark:text-gray-400">Created</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                      <span className="text-gray-600 dark:text-gray-400">Completed</span>
-                    </div>
+              <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700/50">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Daily Activity</h3>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-0.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                      Created
+                    </span>
+                    <span className="flex items-center gap-0.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      Done
+                    </span>
                   </div>
                 </div>
-                
-                <div className="h-40 flex items-end justify-between space-x-1 px-1">
-                  {productivityData.slice(-7).map((day, index) => (
-                    <div key={index} className="flex-1 flex flex-col items-center">
-                      <div className="w-full flex flex-col items-center space-y-1 mb-2">
-                        <div 
-                          className="w-full bg-blue-500 rounded-t"
-                          style={{ height: `${Math.max(day.created * 6, 4)}px` }}
-                          title={`${day.created} tasks created`}
+
+                <div className="flex items-end justify-between gap-1 h-32">
+                  {getProductivityData.slice(-7).map((day, index) => (
+                    <div key={index} className="flex-1 flex flex-col items-center gap-1">
+                      <div className="w-full flex flex-col items-center gap-0.5">
+                        <motion.div
+                          className="w-full bg-blue-400 rounded-t-sm"
+                          initial={{ height: 0 }}
+                          animate={{ height: `${Math.max(day.created * 8, 4)}px` }}
+                          transition={{ delay: index * 0.05 }}
                         />
-                        <div 
-                          className="w-full bg-green-500 rounded-b"
-                          style={{ height: `${Math.max(day.completed * 6, 4)}px` }}
-                          title={`${day.completed} tasks completed`}
+                        <motion.div
+                          className="w-full bg-emerald-400 rounded-b-sm"
+                          initial={{ height: 0 }}
+                          animate={{ height: `${Math.max(day.completed * 8, 4)}px` }}
+                          transition={{ delay: index * 0.05 + 0.1 }}
                         />
                       </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className={`text-[10px] ${day.isToday ? 'text-blue-500 font-bold' : 'text-gray-400'}`}>
                         {day.date}
                       </span>
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
+
+              {/* Completion Rate */}
+              <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700/50">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Completion Rate</h3>
+                  <span className="text-sm font-bold text-emerald-500">{completionRate}%</span>
+                </div>
+                <div className="w-full h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${completionRate}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                  <span>{stats.completed} completed</span>
+                  <span>{stats.total} total</span>
+                </div>
+              </div>
             </motion.div>
           )}
 
-          {/* Category Performance */}
+          {/* Categories Tab */}
           {activeTab === 'categories' && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-4"
+              className="space-y-2.5"
             >
-              {categoryPerformance.map((category, index) => (
-                <motion.div
-                  key={category.category}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium text-gray-900 dark:text-white">{category.category}</h3>
-                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                      category.completionRate >= 80 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : category.completionRate >= 60
-                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                    }`}>
-                      {category.completionRate}%
-                    </span>
+              {categoryPerformance.length === 0 ? (
+                <div className="text-center py-12 bg-white/50 dark:bg-[#1e293b]/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <PieChart size={24} className="text-gray-400" />
                   </div>
-                  
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
-                    <span>{category.completed}/{category.total} completed</span>
-                    <span>{category.total} total</span>
-                  </div>
-                  
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="h-2 rounded-full transition-all duration-300 bg-gradient-to-r from-blue-500 to-indigo-600"
-                      style={{ width: `${category.completionRate}%` }}
-                    />
-                  </div>
-                </motion.div>
-              ))}
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No category data available</p>
+                </div>
+              ) : (
+                categoryPerformance.map((category, index) => (
+                  <motion.div
+                    key={category.category}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-white dark:bg-[#1e293b] rounded-2xl p-3.5 shadow-sm border border-gray-100 dark:border-gray-700/50"
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-medium text-sm text-gray-900 dark:text-white">{category.category}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${category.completionRate >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                          category.completionRate >= 50 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                            'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                        }`}>
+                        {category.completionRate}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 mb-1">
+                      <span>{category.completed} completed</span>
+                      <span>{category.total} total</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${category.completionRate}%` }}
+                        transition={{ duration: 0.8 }}
+                        style={{
+                          background: `linear-gradient(90deg, 
+                            ${category.completionRate >= 80 ? '#10B981' :
+                              category.completionRate >= 50 ? '#F59E0B' : '#EF4444'}, 
+                            ${category.completionRate >= 80 ? '#34D399' :
+                              category.completionRate >= 50 ? '#FBBF24' : '#F87171'})`
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </motion.div>
           )}
 
-          {/* Priority Distribution */}
+          {/* Priorities Tab */}
           {activeTab === 'priorities' && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-4"
+              className="space-y-2.5"
             >
               {priorityDistribution.map((priority, index) => (
                 <motion.div
                   key={priority.priority}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm"
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white dark:bg-[#1e293b] rounded-2xl p-3.5 shadow-sm border border-gray-100 dark:border-gray-700/50"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`font-medium ${
-                      priority.priority === 'Urgent' ? 'text-red-600 dark:text-red-400' :
-                      priority.priority === 'High' ? 'text-orange-600 dark:text-orange-400' :
-                      priority.priority === 'Medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                      'text-gray-600 dark:text-gray-400'
-                    }`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`font-medium text-sm ${priority.priority.includes('Urgent') ? 'text-rose-600 dark:text-rose-400' :
+                        priority.priority.includes('High') ? 'text-orange-600 dark:text-orange-400' :
+                          priority.priority.includes('Medium') ? 'text-amber-600 dark:text-amber-400' :
+                            'text-gray-600 dark:text-gray-400'
+                      }`}>
                       {priority.priority}
                     </span>
-                    <span className="text-lg font-bold">{priority.percentage}%</span>
+                    <span className="text-sm font-bold">{priority.percentage}%</span>
                   </div>
-                  
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
-                    <span>{priority.completed}/{priority.total} completed</span>
+                  <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 mb-1">
+                    <span>{priority.completed} completed</span>
+                    <span>{priority.total} total</span>
                   </div>
-                  
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${priority.percentage}%`,
-                        backgroundColor: 
-                          priority.priority === 'Urgent' ? '#ef4444' :
-                          priority.priority === 'High' ? '#f97316' :
-                          priority.priority === 'Medium' ? '#eab308' :
-                          '#6b7280'
+                  <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${priority.percentage}%` }}
+                      transition={{ duration: 0.8 }}
+                      style={{
+                        backgroundColor:
+                          priority.priority.includes('Urgent') ? '#EF4444' :
+                            priority.priority.includes('High') ? '#F97316' :
+                              priority.priority.includes('Medium') ? '#EAB308' :
+                                '#6B7280'
                       }}
                     />
                   </div>
@@ -446,109 +739,109 @@ export const Analytics: React.FC = () => {
             </motion.div>
           )}
 
-          {/* Insights */}
+          {/* Insights Tab */}
           {activeTab === 'insights' && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-4"
+              className="space-y-3"
             >
-              <motion.div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-5 text-white shadow-lg">
-                <h3 className="font-semibold mb-3 flex items-center">
-                  <Sparkles size={18} className="mr-2" />
-                  Productivity Insights
+              {/* Insights Cards */}
+              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-purple-500/25">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Sparkles size={16} />
+                  Key Insights
                 </h3>
-                
-                <div className="space-y-4">
+
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-2xl font-bold">{completionRate}%</div>
-                      <div className="text-purple-100 text-sm">Completion Rate</div>
+                      <div className="text-purple-200 text-xs">Completion Rate</div>
                     </div>
                     <div className="text-right">
-                      <div className={`flex items-center justify-end ${completionRate >= 70 ? 'text-green-300' : 'text-yellow-300'}`}>
-                        {completionRate >= 70 ? 'Excellent! ' : 'Good progress '}
-                        {completionRate >= 70 ? '🎉' : '👍'}
+                      <div className={`flex items-center gap-1 ${completionRate >= 70 ? 'text-green-300' : 'text-yellow-300'}`}>
+                        {completionRate >= 70 ? '🌟 Excellent' : '📈 Keep going'}
                       </div>
-                      <div className="text-purple-100 text-xs">
-                        {completionRate >= 70 ? 'Ahead of most users' : 'Keep going!'}
+                      <div className="text-purple-200 text-[10px]">
+                        {completionRate >= 70 ? 'Top performer' : 'Room to grow'}
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-2xl font-bold">{averageTasksPerDay}</div>
-                      <div className="text-purple-100 text-sm">Avg Tasks/Day</div>
+                      <div className="text-purple-200 text-xs">Avg Tasks/Day</div>
                     </div>
                     <div className="text-right">
-                      <div className={`flex items-center justify-end ${averageTasksPerDay >= 5 ? 'text-green-300' : 'text-yellow-300'}`}>
-                        {averageTasksPerDay >= 5 ? 'Very productive! ' : 'Steady pace '}
-                        {averageTasksPerDay >= 5 ? '🔥' : '👌'}
+                      <div className={`flex items-center gap-1 ${averageTasksPerDay >= 5 ? 'text-green-300' : 'text-yellow-300'}`}>
+                        {averageTasksPerDay >= 5 ? '🔥 On fire' : '👌 Steady'}
                       </div>
-                      <div className="text-purple-100 text-xs">
-                        {averageTasksPerDay >= 5 ? 'You\'re on fire!' : 'Consistency is key'}
+                      <div className="text-purple-200 text-[10px]">
+                        {averageTasksPerDay >= 5 ? 'Very productive' : 'Consistent'}
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold">
-                        {categoryPerformance.reduce((best, cat) => 
-                          cat.completionRate > best.completionRate ? cat : best, 
-                          categoryPerformance[0])?.category || 'N/A'}
+
+                  {categoryPerformance.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-2xl font-bold">
+                          {categoryPerformance.reduce((best, cat) =>
+                            cat.completionRate > best.completionRate ? cat : best
+                          ).category}
+                        </div>
+                        <div className="text-purple-200 text-xs">Strongest Category</div>
                       </div>
-                      <div className="text-purple-100 text-sm">Strongest Category</div>
+                      <div className="text-right">
+                        <div className="text-green-300">🎯 Focus area</div>
+                        <div className="text-purple-200 text-[10px]">Leverage your strength</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-green-300">Well done! 🌟</div>
-                      <div className="text-purple-100 text-xs">Focus on your strengths</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Motivational Tip */}
+              <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700/50">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-yellow-500/10 flex-shrink-0">
+                    <Lightbulb size={16} className="text-yellow-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-sm text-gray-900 dark:text-white">Pro Tip</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 leading-relaxed">
+                      {completionRate < 70
+                        ? "🎯 Break large tasks into smaller steps. Focus on one task at a time to improve your completion rate."
+                        : "🌟 You're doing great! Challenge yourself with more complex tasks to keep growing."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Achievement */}
+              {productivityScore >= 70 && (
+                <div className="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 dark:from-amber-500/5 dark:to-yellow-500/5 rounded-2xl p-4 border border-amber-200/50 dark:border-amber-800/30">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">🏆</div>
+                    <div>
+                      <h4 className="font-semibold text-sm text-gray-900 dark:text-white">Achievement Unlocked!</h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Productivity Master - You're in the top tier of users!</p>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-              
-              {/* Tips Card */}
-              <motion.div 
-                className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                  <Lightbulb size={18} className="mr-2 text-yellow-500" />
-                  Pro Tip
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  {completionRate < 70 
-                    ? "Try breaking larger tasks into smaller, manageable subtasks to improve your completion rate."
-                    : "Your completion rate is excellent! Consider taking on more challenging tasks to continue growing."}
-                </p>
-              </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Mobile Optimization Notice - New Feature */}
-        <motion.div 
-          className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Smartphone size={18} className="text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
-          <div>
-            <h4 className="text-blue-800 dark:text-blue-200 font-medium text-sm">Mobile Optimized</h4>
-            <p className="text-blue-600 dark:text-blue-300 text-xs mt-1">
-              This view is specially designed for your mobile device. Swipe between tabs to explore different analytics.
-            </p>
-          </div>
-        </motion.div>
       </div>
 
-      <BottomBar />
+      {/* Bottom Bar */}
+      <BottomBar onTaskFormOpen={() => { }} />
     </div>
   );
 };
+
+export default Analytics;

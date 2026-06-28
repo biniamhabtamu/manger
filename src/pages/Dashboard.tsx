@@ -33,7 +33,24 @@ import {
   Circle,
   CheckCircle,
   XCircle,
-  Target as TargetIcon
+  Target as TargetIcon,
+  LayoutGrid,
+  List,
+  Grid3x3,
+  SlidersHorizontal,
+  Eye,
+  EyeOff,
+  Crown,
+  Award as AwardIcon,
+  TrendingUp as TrendingUpIcon,
+  Rocket,
+  Coffee,
+  Moon,
+  Sun,
+  Dumbbell,
+  BookOpen,
+  Heart,
+  Brain
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTasks } from '../hooks/useTasks';
@@ -41,32 +58,32 @@ import { useAuth } from '../contexts/AuthContext';
 import { BottomBar } from '../components/layout/BottomBar';
 import { TaskForm } from '../components/tasks/TaskForm';
 
-// Mini Stat Card - Ultra Compact
+// Mini Stat Card - Native Style
 const MiniStat = ({ label, value, icon: Icon, color, trend }) => {
   const colors = {
-    blue: 'bg-blue-500',
-    green: 'bg-emerald-500',
-    yellow: 'bg-amber-500',
-    red: 'bg-rose-500',
-    purple: 'bg-violet-500'
+    blue: 'bg-blue-500/10 text-blue-500',
+    green: 'bg-emerald-500/10 text-emerald-500',
+    yellow: 'bg-amber-500/10 text-amber-500',
+    red: 'bg-rose-500/10 text-rose-500',
+    purple: 'bg-violet-500/10 text-violet-500'
   };
 
   return (
     <motion.div
       whileTap={{ scale: 0.95 }}
-      className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-3 border border-gray-100/50 dark:border-gray-700/50 shadow-sm"
+      className="bg-white dark:bg-[#1e293b] rounded-2xl p-3 border border-gray-100 dark:border-gray-700/50 shadow-sm"
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <p className="text-[9px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             {label}
           </p>
           <p className="text-xl font-bold text-gray-900 dark:text-white mt-0.5">
             {value}
           </p>
         </div>
-        <div className={`w-8 h-8 rounded-xl ${colors[color]} bg-opacity-10 flex items-center justify-center`}>
-          <Icon size={16} className={`text-${color}-500`} />
+        <div className={`p-2 rounded-xl ${colors[color]}`}>
+          <Icon size={16} />
         </div>
       </div>
       {trend && (
@@ -81,7 +98,7 @@ const MiniStat = ({ label, value, icon: Icon, color, trend }) => {
   );
 };
 
-// Compact Task Item
+// Compact Task Item - Native Style
 const TaskItem = ({ task, index }) => {
   const priorityColors = {
     low: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -126,57 +143,72 @@ const TaskItem = ({ task, index }) => {
   );
 };
 
-// Skeleton Loader
+// Skeleton Loader - Native Style
 const DashboardSkeleton = () => (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
-    <div className="p-4 space-y-4 max-w-md mx-auto">
-      <div className="animate-pulse">
-        <div className="h-7 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-2"></div>
-        <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+  <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] pb-24">
+    <div className="px-4 pt-6 space-y-4 max-w-md mx-auto">
+      <div className="flex items-center justify-between animate-pulse">
+        <div className="space-y-2">
+          <div className="h-7 w-40 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          <div className="h-4 w-56 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+        </div>
+        <div className="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
       </div>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-2 animate-pulse">
         {[1, 2, 3, 4].map(i => (
-          <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-3 h-20 animate-pulse"></div>
+          <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
         ))}
       </div>
-      <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-24 animate-pulse"></div>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
+      <div className="grid grid-cols-4 gap-2 animate-pulse">
         {[1, 2, 3, 4].map(i => (
-          <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-xl p-3 h-16 animate-pulse"></div>
+          <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
         ))}
       </div>
+      <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
       <div className="space-y-2">
         {[1, 2, 3].map(i => (
-          <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-xl p-3 h-16 animate-pulse"></div>
+          <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
         ))}
       </div>
-      <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 h-20 animate-pulse"></div>
+      <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
     </div>
   </div>
 );
 
 export const Dashboard: React.FC = () => {
-  // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL, BEFORE ANY CONDITIONAL RETURNS
   const { stats, tasks, loading } = useTasks();
   const { userProfile } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDelayedLoading, setIsDelayedLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('all');
   const [motivationIndex, setMotivationIndex] = useState(0);
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [showHabits, setShowHabits] = useState(true);
 
-  // All effects must be at the top level
+  // Get habits from localStorage
+  const [habits, setHabits] = useState<any[]>([]);
+
   useEffect(() => {
-    const timer = setTimeout(() => setIsDelayedLoading(false), 1500);
+    const saved = localStorage.getItem('habits');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setHabits(parsed);
+      } catch (e) {
+        console.error('Error loading habits:', e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsDelayedLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Now we can use conditional returns AFTER all hooks
   if (loading || isDelayedLoading) {
     return <DashboardSkeleton />;
   }
 
-  // All computed values go after hooks
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
   const weeklyCompletionRate = stats.thisWeekTotal > 0 ? Math.round((stats.thisWeekCompleted / stats.thisWeekTotal) * 100) : 0;
 
@@ -188,6 +220,14 @@ export const Dashboard: React.FC = () => {
   const priorityTasks = tasks
     .filter(task => (task.priority === 'urgent' || task.priority === 'high') && task.status !== 'completed')
     .slice(0, 3);
+
+  // Calculate habit stats
+  const activeHabits = habits.filter(h => h.active !== false).length;
+  const totalHabitStreak = habits.reduce((sum, h) => sum + (h.currentStreak || 0), 0);
+  const bestHabitStreak = Math.max(...habits.map(h => h.bestStreak || 0), 0);
+  const habitCompletionRate = habits.length > 0
+    ? Math.round((habits.filter(h => h.totalCompletions > 0).length / habits.length) * 100)
+    : 0;
 
   const quickStats = [
     { label: 'Total', value: stats.total, icon: CheckSquare, color: 'blue', trend: 12 },
@@ -218,20 +258,21 @@ export const Dashboard: React.FC = () => {
     "🌟 Small daily improvements lead to stunning results."
   ];
 
-  // Function to handle opening task form
   const handleOpenTaskForm = () => {
     setShowTaskForm(true);
   };
 
-  // Function to handle closing task form
   const handleCloseTaskForm = () => {
     setShowTaskForm(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 pb-24">
-      <div className="p-4 space-y-4 max-w-md mx-auto">
-        {/* Header - Compact */}
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] pb-24">
+      {/* Status Bar Gradient */}
+      <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+
+      <div className="px-4 pt-3 space-y-4 max-w-md mx-auto">
+        {/* Header - Native Style */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -250,14 +291,14 @@ export const Dashboard: React.FC = () => {
           </div>
           <motion.button
             whileTap={{ scale: 0.9 }}
-            className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-md flex items-center justify-center border border-gray-100 dark:border-gray-700 relative"
+            className="w-10 h-10 rounded-full bg-white dark:bg-[#1e293b] shadow-md flex items-center justify-center border border-gray-100 dark:border-gray-700 relative"
           >
             <Bell size={18} className="text-gray-600 dark:text-gray-300" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
           </motion.button>
         </motion.div>
 
-        {/* Stats Grid - Ultra Compact */}
+        {/* Stats Grid - Native Cards */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -276,12 +317,12 @@ export const Dashboard: React.FC = () => {
           ))}
         </motion.div>
 
-        {/* Progress Ring */}
+        {/* Progress Ring - Native Style */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100/50 dark:border-gray-700/50"
+          className="bg-white dark:bg-[#1e293b] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700/50"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -331,14 +372,141 @@ export const Dashboard: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Quick Actions - Compact Grid */}
+        {/* Habit Tracker Section - Native Style */}
+        {habits.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-purple-500/10 via-indigo-500/10 to-blue-500/10 dark:from-purple-500/5 dark:via-indigo-500/5 dark:to-blue-500/5 rounded-2xl p-3.5 border border-purple-200/50 dark:border-purple-800/30"
+          >
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 shadow-lg shadow-purple-500/25">
+                  <TargetIcon size={14} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">Habit Tracker</h3>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    {activeHabits} active • {totalHabitStreak} day streak
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowHabits(!showHabits)}
+                  className="p-1.5 rounded-lg bg-white/50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-600 transition-colors"
+                >
+                  {showHabits ? <EyeOff size={14} className="text-gray-500" /> : <Eye size={14} className="text-gray-500" />}
+                </motion.button>
+                <Link to="/habits">
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg text-[10px] font-medium hover:shadow-lg transition-all flex items-center gap-1"
+                  >
+                    <BarChart3 size={10} />
+                    View All
+                  </motion.button>
+                </Link>
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {showHabits && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid grid-cols-4 gap-1.5 mb-2.5">
+                    <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-2 border border-purple-100 dark:border-purple-800/30">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <Flame size={12} className="text-orange-500" />
+                          <span className="text-[9px] text-gray-500 dark:text-gray-400">Streak</span>
+                        </div>
+                        <span className="text-sm font-bold text-orange-500">{totalHabitStreak}</span>
+                      </div>
+                    </div>
+                    <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-2 border border-purple-100 dark:border-purple-800/30">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <AwardIcon size={12} className="text-yellow-500" />
+                          <span className="text-[9px] text-gray-500 dark:text-gray-400">Best</span>
+                        </div>
+                        <span className="text-sm font-bold text-yellow-500">{bestHabitStreak}</span>
+                      </div>
+                    </div>
+                    <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-2 border border-purple-100 dark:border-purple-800/30">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <Activity size={12} className="text-emerald-500" />
+                          <span className="text-[9px] text-gray-500 dark:text-gray-400">Active</span>
+                        </div>
+                        <span className="text-sm font-bold text-emerald-500">{activeHabits}</span>
+                      </div>
+                    </div>
+                    <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-2 border border-purple-100 dark:border-purple-800/30">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <TrendingUpIcon size={12} className="text-blue-500" />
+                          <span className="text-[9px] text-gray-500 dark:text-gray-400">Rate</span>
+                        </div>
+                        <span className="text-sm font-bold text-blue-500">{habitCompletionRate}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {habits.slice(0, 2).map((habit) => (
+                      <div
+                        key={habit.id}
+                        className="flex items-center gap-2.5 bg-white/80 dark:bg-gray-800/80 rounded-xl p-2 border border-gray-100 dark:border-gray-700/50"
+                      >
+                        <span className="text-xl">{habit.icon || '🌟'}</span>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 flex-1 truncate">
+                          {habit.name}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <Flame size={10} className="text-orange-400" />
+                          <span className="text-[10px] font-bold text-orange-500">
+                            {habit.currentStreak || 0}
+                          </span>
+                        </div>
+                        <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min((habit.totalCompletions || 0) / 30 * 100, 100)}%`,
+                              backgroundColor: habit.color || '#8B5CF6'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {habits.length > 2 && (
+                      <Link
+                        to="/habits"
+                        className="block text-center text-[10px] text-purple-500 hover:text-purple-600 transition-colors py-1"
+                      >
+                        +{habits.length - 2} more habits
+                      </Link>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+
+        {/* Quick Actions - Native Style */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.25 }}
           className="grid grid-cols-4 gap-2"
         >
-          {/* New Task Button - Now opens TaskForm */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -347,9 +515,9 @@ export const Dashboard: React.FC = () => {
             <motion.button
               whileTap={{ scale: 0.92 }}
               onClick={handleOpenTaskForm}
-              className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
+              className="w-full bg-white dark:bg-[#1e293b] rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-md transition-all"
             >
-              <div className="w-8 h-8 rounded-xl bg-violet-500 bg-opacity-10 flex items-center justify-center mx-auto mb-1">
+              <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center mx-auto mb-1">
                 <Plus size={16} className="text-violet-500" />
               </div>
               <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
@@ -358,7 +526,6 @@ export const Dashboard: React.FC = () => {
             </motion.button>
           </motion.div>
 
-          {/* Calendar Button */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -367,9 +534,9 @@ export const Dashboard: React.FC = () => {
             <Link to="/calendarpage">
               <motion.button
                 whileTap={{ scale: 0.92 }}
-                className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
+                className="w-full bg-white dark:bg-[#1e293b] rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-md transition-all"
               >
-                <div className="w-8 h-8 rounded-xl bg-blue-500 bg-opacity-10 flex items-center justify-center mx-auto mb-1">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center mx-auto mb-1">
                   <Calendar size={16} className="text-blue-500" />
                 </div>
                 <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
@@ -379,7 +546,6 @@ export const Dashboard: React.FC = () => {
             </Link>
           </motion.div>
 
-          {/* Analytics Button */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -388,9 +554,9 @@ export const Dashboard: React.FC = () => {
             <Link to="/analytics">
               <motion.button
                 whileTap={{ scale: 0.92 }}
-                className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
+                className="w-full bg-white dark:bg-[#1e293b] rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-md transition-all"
               >
-                <div className="w-8 h-8 rounded-xl bg-emerald-500 bg-opacity-10 flex items-center justify-center mx-auto mb-1">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-1">
                   <BarChart3 size={16} className="text-emerald-500" />
                 </div>
                 <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
@@ -400,7 +566,6 @@ export const Dashboard: React.FC = () => {
             </Link>
           </motion.div>
 
-          {/* Habits Button - NEW */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -409,9 +574,9 @@ export const Dashboard: React.FC = () => {
             <Link to="/habits">
               <motion.button
                 whileTap={{ scale: 0.92 }}
-                className="w-full bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md transition-shadow"
+                className="w-full bg-white dark:bg-[#1e293b] rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-md transition-all"
               >
-                <div className="w-8 h-8 rounded-xl bg-purple-500 bg-opacity-10 flex items-center justify-center mx-auto mb-1">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center mx-auto mb-1">
                   <TargetIcon size={16} className="text-purple-500" />
                 </div>
                 <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 text-center">
@@ -422,13 +587,13 @@ export const Dashboard: React.FC = () => {
           </motion.div>
         </motion.div>
 
-        {/* Priority Tasks */}
+        {/* Priority Tasks - Native Style */}
         {priorityTasks.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100/50 dark:border-gray-700/50"
+            className="bg-white dark:bg-[#1e293b] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700/50"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -451,12 +616,12 @@ export const Dashboard: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Recent Tasks */}
+        {/* Recent Tasks - Native Style */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.35 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100/50 dark:border-gray-700/50"
+          className="bg-white dark:bg-[#1e293b] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700/50"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -472,7 +637,6 @@ export const Dashboard: React.FC = () => {
             </Link>
           </div>
 
-          {/* Search */}
           <div className="relative mb-3">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -506,7 +670,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Motivation Tip - Compact */}
+        {/* Motivation Tip - Native Style */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -541,7 +705,7 @@ export const Dashboard: React.FC = () => {
         onClose={handleCloseTaskForm}
       />
 
-      {/* Bottom Bar - Pass the function properly */}
+      {/* Bottom Bar */}
       <BottomBar onTaskFormOpen={handleOpenTaskForm} />
     </div>
   );
