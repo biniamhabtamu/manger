@@ -21,7 +21,11 @@ import {
   CheckCircle,
   Circle,
   X,
-  AlertTriangle
+  AlertTriangle,
+  TrendingUp,
+  ListChecks,
+  Award,
+  GripVertical
 } from 'lucide-react';
 import { Task } from '../../types/task';
 import { useTasks } from '../../hooks/useTasks';
@@ -35,14 +39,85 @@ interface TaskCardProps {
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false }) => {
-  const { updateTask, deleteTask } = useTasks();
+  const { updateTask, deleteTask, tasks } = useTasks();
   const [showMenu, setShowMenu] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [showGoalTodos, setShowGoalTodos] = useState(false);
 
-  // Helpers
+  const isGoalTask = useMemo(() => {
+    return task.tags?.includes('goal') || false;
+  }, [task.tags]);
+
+  const goalTimeframe = useMemo(() => {
+    if (!task.tags) return null;
+    const timeframeTags = ['daily', 'weekly', 'monthly', 'yearly'];
+    const found = task.tags.find(tag => timeframeTags.includes(tag));
+    return found as 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  }, [task.tags]);
+
+  const goalColor = useMemo(() => {
+    if (!task.tags) return '#8B5CF6';
+    const colorTag = task.tags.find(tag => tag.startsWith('goal-color-'));
+    if (colorTag) {
+      return `#${colorTag.replace('goal-color-', '')}`;
+    }
+    return '#8B5CF6';
+  }, [task.tags]);
+
+  const relatedGoalTasks = useMemo(() => {
+    if (!isGoalTask || !tasks || !Array.isArray(tasks)) return [];
+
+    const goalTitleMatch = task.title.match(/^(.*?) - \d+:/);
+    if (!goalTitleMatch) return [];
+
+    const goalTitle = goalTitleMatch[1];
+
+    return tasks.filter((t: any) =>
+      t.id !== task.id &&
+      t.title?.startsWith(goalTitle) &&
+      t.tags?.includes('goal')
+    );
+  }, [task, tasks, isGoalTask]);
+
+  const goalProgress = useMemo(() => {
+    if (!isGoalTask) return null;
+
+    const allGoalTasks = [task, ...relatedGoalTasks];
+    if (allGoalTasks.length === 0) return null;
+
+    const completed = allGoalTasks.filter(t => t.status === 'completed').length;
+    const total = allGoalTasks.length;
+
+    return {
+      completed,
+      total,
+      percentage: Math.round((completed / total) * 100)
+    };
+  }, [task, relatedGoalTasks, isGoalTask]);
+
+  const getGoalIcon = () => {
+    switch (goalTimeframe) {
+      case 'daily': return '🌅';
+      case 'weekly': return '📆';
+      case 'monthly': return '🗓️';
+      case 'yearly': return '📋';
+      default: return '🎯';
+    }
+  };
+
+  const getGoalLabel = () => {
+    switch (goalTimeframe) {
+      case 'daily': return 'Daily Goal';
+      case 'weekly': return 'Weekly Goal';
+      case 'monthly': return 'Monthly Goal';
+      case 'yearly': return 'Yearly Goal';
+      default: return 'Goal';
+    }
+  };
+
   const formatDate = (d?: string | Date) => {
     if (!d) return '';
     const date = d instanceof Date ? d : new Date(d);
@@ -110,7 +185,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
     return Math.round((done / total) * 100);
   }, [task.subtasks]);
 
-  // Actions
   const handleStatusToggle = async () => {
     setLoading(true);
     try {
@@ -181,6 +255,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
     setExpanded(!expanded);
   };
 
+  const toggleGoalTodos = () => {
+    setShowGoalTodos(!showGoalTodos);
+  };
+
   return (
     <>
       <motion.article
@@ -189,18 +267,33 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
         transition={{ delay: index * 0.04 }}
         className={`group bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-3 transition-all hover:shadow-md relative overflow-hidden w-full ${task.status === 'completed' ? 'opacity-75' : ''
           }`}
+        style={{
+          borderLeft: isGoalTask ? `4px solid ${goalColor}` : undefined
+        }}
         aria-labelledby={`task-${task.id}-title`}
         role="article"
       >
+        {/* Goal Badge */}
+        {isGoalTask && (
+          <div className="absolute top-2 right-2">
+            <div
+              className="flex items-center gap-1 px-2 py-0.5 text-white rounded-full text-[10px] font-medium shadow-sm"
+              style={{ backgroundColor: goalColor }}
+            >
+              <TrendingUp size={10} />
+              {getGoalLabel()}
+            </div>
+          </div>
+        )}
+
         {/* Favorite indicator */}
-        {task.favorite && (
+        {task.favorite && !isGoalTask && (
           <div className="absolute top-1.5 right-1.5 text-yellow-400">
             <Star size={12} fill="currentColor" />
           </div>
         )}
 
         <div className="flex items-start gap-2.5 w-full">
-          {/* status toggle - smaller */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.92 }}
@@ -209,8 +302,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
             aria-pressed={task.status === 'completed'}
             title={task.status === 'completed' ? 'Mark as Todo' : 'Mark as Completed'}
             className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${task.status === 'completed'
-                ? 'bg-green-500 border-green-500 text-white'
-                : 'border-gray-300 dark:border-gray-600 hover:border-green-500'
+              ? 'bg-green-500 border-green-500 text-white'
+              : 'border-gray-300 dark:border-gray-600 hover:border-green-500'
               }`}
           >
             {task.status === 'completed' && <CheckSquare size={10} />}
@@ -219,18 +312,119 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-start gap-1.5">
               <div className="flex-1 min-w-0">
-                {/* Title - smaller */}
                 <h3
                   id={`task-${task.id}-title`}
                   className={`text-sm font-semibold leading-tight break-words ${task.status === 'completed'
-                      ? 'text-gray-500 dark:text-gray-400 line-through'
-                      : 'text-gray-900 dark:text-white'
+                    ? 'text-gray-500 dark:text-gray-400 line-through'
+                    : 'text-gray-900 dark:text-white'
                     }`}
                 >
-                  {task.title}
+                  {isGoalTask ? (
+                    <span className="flex items-center gap-1.5">
+                      <span>{getGoalIcon()}</span>
+                      {task.title}
+                    </span>
+                  ) : (
+                    task.title
+                  )}
                 </h3>
 
-                {/* Badges - more compact */}
+                {/* Goal Progress - Customizable Todo Boxes */}
+                {isGoalTask && goalProgress && (
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                        <Award size={12} style={{ color: goalColor }} />
+                        Goal Progress
+                      </span>
+                      <span className="font-medium" style={{ color: goalColor }}>
+                        {goalProgress.completed}/{goalProgress.total} ({goalProgress.percentage}%)
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${goalProgress.percentage}%` }}
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ backgroundColor: goalColor }}
+                      />
+                    </div>
+
+                    {/* Customizable Todo Boxes */}
+                    <div className="mt-2 space-y-1.5">
+                      {/* Current task as todo box */}
+                      <div
+                        className={`flex items-center gap-2 p-2 rounded-lg transition-all ${task.status === 'completed'
+                          ? 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800'
+                          : 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                          }`}
+                        style={{
+                          borderLeft: task.status === 'completed' ? '3px solid #10B981' : `3px solid ${goalColor}`
+                        }}
+                      >
+                        <div className="flex-1">
+                          <p className={`text-xs break-words ${task.status === 'completed'
+                            ? 'line-through text-gray-400 dark:text-gray-500'
+                            : 'text-gray-700 dark:text-gray-300'
+                            }`}>
+                            {task.title}
+                          </p>
+                        </div>
+                        {task.status === 'completed' && (
+                          <CheckCircle size={12} className="text-green-500 flex-shrink-0" />
+                        )}
+                      </div>
+
+                      {/* Related goal todos as customizable boxes */}
+                      {relatedGoalTasks.slice(0, showGoalTodos ? undefined : 3).map((relatedTask: any) => (
+                        <div
+                          key={relatedTask.id}
+                          className={`flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer hover:shadow-sm ${relatedTask.status === 'completed'
+                            ? 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800'
+                            : 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                            }`}
+                          style={{
+                            borderLeft: relatedTask.status === 'completed' ? '3px solid #10B981' : `3px solid ${goalColor}`
+                          }}
+                          onClick={() => {
+                            // Toggle status of related task
+                            const newStatus = relatedTask.status === 'completed' ? 'todo' : 'completed';
+                            updateTask(relatedTask.id, { status: newStatus });
+                          }}
+                        >
+                          <div className="flex-1">
+                            <p className={`text-xs break-words ${relatedTask.status === 'completed'
+                              ? 'line-through text-gray-400 dark:text-gray-500'
+                              : 'text-gray-600 dark:text-gray-400'
+                              }`}>
+                              {relatedTask.title}
+                            </p>
+                          </div>
+                          {relatedTask.status === 'completed' ? (
+                            <CheckCircle size={12} className="text-green-500 flex-shrink-0" />
+                          ) : (
+                            <Circle size={12} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+                          )}
+                        </div>
+                      ))}
+
+                      {relatedGoalTasks.length > 3 && (
+                        <button
+                          onClick={toggleGoalTodos}
+                          className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 flex items-center gap-1 transition-colors mt-1"
+                        >
+                          {showGoalTodos ? (
+                            <>Show less <ChevronUp size={12} /></>
+                          ) : (
+                            <>Show {relatedGoalTasks.length - 3} more <ChevronDown size={12} /></>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Badges */}
                 <div className="flex flex-wrap items-center gap-1 mt-1.5">
                   <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                     {getStatusIcon(task.status)}
@@ -254,7 +448,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
                   )}
                 </div>
 
-                {/* Description with expand/collapse - more compact */}
+                {/* Description */}
                 {task.description && (
                   <div className="mt-1.5">
                     <button
@@ -289,25 +483,34 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
                   </div>
                 )}
 
-                {/* Tags - more compact */}
+                {/* Tags */}
                 {task.tags?.length > 0 && (
                   <div className="flex flex-wrap gap-0.5 mt-1.5">
-                    {task.tags.slice(0, 2).map((tag, i) => (
-                      <span key={i} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-                        <Tag size={8} />
-                        {tag}
-                      </span>
-                    ))}
-                    {task.tags.length > 2 && (
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                        +{task.tags.length - 2}
-                      </span>
-                    )}
+                    {task.tags
+                      .filter(tag => !['goal', 'daily', 'weekly', 'monthly', 'yearly'].includes(tag))
+                      .filter(tag => !tag.startsWith('goal-color-'))
+                      .slice(0, 2)
+                      .map((tag, i) => (
+                        <span key={i} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                          <Tag size={8} />
+                          {tag}
+                        </span>
+                      ))}
+                    {task.tags
+                      .filter(tag => !['goal', 'daily', 'weekly', 'monthly', 'yearly'].includes(tag))
+                      .filter(tag => !tag.startsWith('goal-color-'))
+                      .length > 2 && (
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                          +{task.tags.filter(tag => !['goal', 'daily', 'weekly', 'monthly', 'yearly'].includes(tag))
+                            .filter(tag => !tag.startsWith('goal-color-'))
+                            .length - 2}
+                        </span>
+                      )}
                   </div>
                 )}
 
-                {/* Subtasks progress - more compact */}
-                {subtaskProgress !== null && (
+                {/* Subtasks progress */}
+                {subtaskProgress !== null && !isGoalTask && (
                   <div className="mt-1.5">
                     <div className="flex items-center justify-between text-[10px]">
                       <span className="text-gray-600 dark:text-gray-300">
@@ -328,20 +531,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
                 )}
               </div>
 
-              {/* Right controls - more compact */}
+              {/* Right controls */}
               <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                <button
-                  onClick={toggleFavorite}
-                  disabled={loading}
-                  title={task.favorite ? 'Unfavorite' : 'Mark favorite'}
-                  className={`p-1 rounded-md transition-colors ${task.favorite
+                {!isGoalTask && (
+                  <button
+                    onClick={toggleFavorite}
+                    disabled={loading}
+                    title={task.favorite ? 'Unfavorite' : 'Mark favorite'}
+                    className={`p-1 rounded-md transition-colors ${task.favorite
                       ? 'text-yellow-500 bg-yellow-100 dark:bg-yellow-900/30'
                       : 'text-gray-400 hover:text-yellow-500 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                  aria-label="toggle favorite"
-                >
-                  <Star size={13} fill={task.favorite ? "currentColor" : "none"} />
-                </button>
+                      }`}
+                    aria-label="toggle favorite"
+                  >
+                    <Star size={13} fill={task.favorite ? "currentColor" : "none"} />
+                  </button>
+                )}
 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -356,7 +561,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
               </div>
             </div>
 
-            {/* Additional info row - more compact */}
+            {/* Additional info row */}
             <div className="flex items-center justify-between mt-1.5 text-[10px] text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1.5">
                 {task.assignee && (
@@ -373,7 +578,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
                   </span>
                 )}
 
-                {task.category && (
+                {task.category && !isGoalTask && (
                   <span className="inline-flex items-center gap-0.5 capitalize">
                     <Sparkles size={10} />
                     {task.category.replace('-', ' ')}
@@ -388,7 +593,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
           </div>
         </div>
 
-        {/* Menu - more compact */}
+        {/* Menu */}
         <AnimatePresence>
           {showMenu && (
             <motion.div
@@ -466,7 +671,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, compact = false
         )}
       </motion.article>
 
-      {/* Delete Confirmation Modal - more compact */}
+      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {showDeleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">

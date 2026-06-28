@@ -17,7 +17,7 @@ import { Analytics } from './pages/Analytics';
 import { OfflineIndicator } from './components/common/OfflineIndicator';
 import { CalendarPage } from './pages/CalendarPage';
 import { BottomBar } from './components/layout/BottomBar';
-
+import HabitTracker from './components/HabitTracker';
 // Capacitor App with safe initialization
 let CapacitorApp;
 let isNativePlatform = false;
@@ -161,6 +161,16 @@ function App() {
                   <ProtectedRoute>
                     <Layout>
                       <Analytics />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/habits"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <HabitTracker />
                     </Layout>
                   </ProtectedRoute>
                 }
